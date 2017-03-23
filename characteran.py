@@ -12,9 +12,10 @@ def getKey(item):
     return item.topLine.p1[1]
 
 
-def characteranalysis(img, bin_img):
+def characteranalysis(img_data):
 
-
+    img = img_data.crop_gray
+    bin_img = img_data.thresholds
     b_img = copy.deepcopy(bin_img)
     allTextContours = []
     for i in range(0, len(bin_img)):
