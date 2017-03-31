@@ -11,6 +11,7 @@ class textcontours:
         self.height = rows
         self.threshold = threshold
         self.goodIndices = []
+        self.contours = []
         self.getTextcontours()
 
     def getTextcontours(self):

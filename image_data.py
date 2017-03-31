@@ -10,6 +10,11 @@ class ImageData:
         self.disqualified = False
         self.crop_gray = 0
         self.plateBorderMask = 0
+        self.hasPlateBorder = False
         self.textLines = []
         self.thresholds = []
         self.plate_corners = []
+        self.charRegions = []
+        self.charRegionsFlat = []
+        self.color_deskewed = None
+        self.regionOfInterest = None

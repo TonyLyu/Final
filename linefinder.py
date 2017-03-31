@@ -2,6 +2,7 @@ import cv2
 import textcontours
 import math
 import sys
+import numpy as np
 class CharPointInfo:
     def __init__(self, contour, index):
         self.contourIndex = index
@@ -23,10 +24,13 @@ class LineFinder:
         linesFound = []
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
         charPoints = []
+
         for i in range(0, contours.size()):
             if contours.goodIndices[i] == False:
                 continue
+
             charPoint = CharPointInfo(contours.contours[i], i)
+
             charPoints.append(charPoint)
         bestCharArea = self.getBestLine(contours, charPoints)
         bestLine = self.extendToEdges(contours.width, contours.height, bestCharArea)
@@ -61,14 +65,17 @@ class LineFinder:
                                      charPoints[rightCPIndex].bottom[0],
                                      charPoints[rightCPIndex].bottom[1])
 
-                parallelBot = top.getParalleLine(medianCharHeight * -1)
+                parallelBot = top.getParalleLine(medianCharHeight * (-1))
                 parallelTop = bottom.getParalleLine(medianCharHeight)
                 if abs(top.angle) <= 15 and abs(parallelBot.angle) <= 15:
+
                     topLines.append(top)
                     bottomLines.append(parallelBot)
                 if abs(parallelTop.angle) <= 15 and abs(bottom.angle) <= 15:
+
                     topLines.append(parallelTop)
                     bottomLines.append(bottom)
+
         bestScoreIndex = 0
         bestScore = -1
         bestScoreDistance = -1
@@ -83,14 +90,25 @@ class LineFinder:
                 maxTop = charPoints[charidx].top[1] * scoring_max_threshold
                 minBot = (charPoints[charidx].bottom[1]) * scoring_min_threshold
                 maxBot = (charPoints[charidx].bottom[1]) * scoring_max_threshold
+
                 if (topYPos >= minTop and topYPos <= maxTop) and (botYPos >= minBot and botYPos <= maxBot):
                     curScore += 1
+
             if (curScore > bestScore) or (curScore == bestScore and topLines[i].length > bestScoreDistance):
+
                 bestScore = curScore
                 bestScoreIndex = i
                 bestScoreDistance = topLines[i].length
         if bestScore < 0:
-            return
+            return bestStripe
+        print "The winning score is %d" %(bestScore)
+        tempImg = np.zeros((contours.height, contours.width), np.uint8)
+        tempImg = cv2.cvtColor(tempImg, cv2.COLOR_GRAY2RGB)
+        tempImg = cv2.line(tempImg, topLines[bestScoreIndex].p1, topLines[bestScoreIndex].p2, (0, 0, 255), 2)
+        tempImg = cv2.line(tempImg, bottomLines[bestScoreIndex].p1, bottomLines[bestScoreIndex].p2, (0, 0, 255), 2)
+        cv2.imshow("winning lines", tempImg)
+        cv2.waitKey(0)
+
         bestStripe.append(topLines[bestScoreIndex].p1)
         bestStripe.append(topLines[bestScoreIndex].p2)
         bestStripe.append(bottomLines[bestScoreIndex].p1)
@@ -123,17 +141,22 @@ class LineFinder:
         if arraySize == 0:
             return 0
         array = sorted(array)
-        if arraySize % 2 ==1:
+        if arraySize % 2 == 1:
             return array[arraySize / 2]
         else:
-            return  array[arraySize / 2 - 1] + array[arraySize / 2] / 2
+            return  (array[arraySize / 2 - 1] + array[arraySize / 2]) / 2
 class LineSegment:
 
     def __init__(self, x1 = 0, y1 = 0, x2 = 0, y2 = 0):
-        self.p1 = (x1, y1)
-        self.p2 = (x2, y2)
+
+        if isinstance(x1, tuple) and isinstance(y1, tuple):
+            self.p1 = (int(x1[0]), int(x1[1]))
+            self.p2 = (int(y1[0]), int(y1[1]))
+        else:
+            self.p1 = (int(x1), int(y1))
+            self.p2 = (int(x2), int(y2))
         if self.p2[0] - self.p1[0] == 0:
-            self.slope = 0.00000000001
+            self.slope = 0.000001
         else:
             self.slope = float(self.p2[1] - self.p1[1]) / float(self.p2[0] - self.p1[0])
         self.length = distanceBetweenPoints(self.p1, self.p2)
@@ -143,19 +166,22 @@ class LineSegment:
         diff_x = self.p2[0] - self.p1[0]
         diff_y = self.p2[1] - self.p1[1]
         angle = math.atan2(diff_x, diff_y)
-        dist_x = distance - math.cos(angle)
-        dist_y = distance - math.sin(angle)
+        dist_x = distance * math.cos(angle)
+        dist_y = (-1) * distance * math.sin(angle)
         offsetX = int(round(dist_x))
         offsetY = int(round(dist_y))
         result = LineSegment(self.p1[0] + offsetX, self.p1[1] + offsetY,
                              self.p2[0] + offsetX, self.p2[1] + offsetY)
         return result
     def getPointAt(self, x):
-        return self.slope * (float(x) - self.p2[0]) + self.p2[1]
+        result = self.slope * (float(x) - self.p2[0]) + self.p2[1]
+
+        return result
 
     def closestPointOnSegmentTo(self, p):
         top = (p[0] - self.p1[0]) * (self.p2[0] - self.p1[0]) + (p[1] - self.p1[1]) * (self.p2[1] - self.p1[1])
         bottom = distanceBetweenPoints(self.p2, self.p1)
+        bottom = bottom * bottom
         u = float(top) / bottom
         x = self.p1[0] + u * (self.p2[0] - self.p1[0])
         y = self.p1[1] + u * (self.p2[1] - self.p1[1])
@@ -169,6 +195,7 @@ class LineSegment:
         if self.p1[0] == self.p2[0]:
             ydiff = self.p2[1] - self.p1[1]
             y = self.p1[1] + (float(ydiff) / 2)
+            return (self.p1[0], y)
         diff = self.p2[0] - self.p1[0]
         midX = float(self.p1[0]) + (float(diff) / 2)
         midY = self.getPointAt(midX)
@@ -186,10 +213,10 @@ class LineSegment:
         elif line.p1[0] == line.p2[0]:
             return (line.p1[0], self.getPointAt(line.p1[0]))
         else:
-            intersection_X = (c1 - c2) / (self.slope - line.slope)
+            intersection_X = (c2 - c1) / (self.slope - line.slope)
             intersection_Y = self.slope * intersection_X + c1
 
-        return (intersection_X, intersection_Y)
+        return (int(round(intersection_X)), int(round(intersection_Y)))
 def distanceBetweenPoints(p1, p2):
     asquared = float(p2[0] - p1[0]) * (p2[0] - p1[0])
     bsquared = float(p2[1] - p1[1]) * (p2[1] - p1[1])
@@ -198,8 +225,8 @@ def distanceBetweenPoints(p1, p2):
 def angleBetweenPoints(p1, p2):
     deltaY = int(p2[1] - p1[1])
     deltaX = int(p2[0] - p1[0])
-    return math.atan2(float(deltaY), float(deltaX) * (180 / math.pi)
-    )
+
+    return math.atan2(float(deltaY), float(deltaX)) * (180 / math.pi)
 def findClosestPoint(polygon_points, num_points, position):
 
     closest_point_index = 0
@@ -224,3 +251,12 @@ def sortPolygonPoints(polygon_points, surrounding_image):
     return return_points
 def drawImageDashboard(images, imageType, numColumns):
     numRows = math.ceil(len(images) / float(numColumns))
+
+def median(array, arraySize):
+    if arraySize == 0:
+        return 0
+    array = sorted(array)
+    if arraySize % 2 ==1:
+        return array[arraySize / 2]
+    else:
+        return  array[arraySize / 2 - 1] + array[arraySize / 2] / 2

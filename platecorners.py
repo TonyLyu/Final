@@ -62,11 +62,11 @@ class PlateCorners:
             confidenceDiff += 2
         elif v1 != -1 and v2 != -1:
             left = self.plateLines.verticalLines[v1].line
-            right = self.plateLines.verticalLinesp[v2].line
+            right = self.plateLines.verticalLines[v2].line
             confidenceDiff += (1.0 - self.plateLines.verticalLines[v1].confidence)
             confidenceDiff += (1.0 - self.plateLines.verticalLines[v2].confidence)
         elif v1 == -1 and v2 != -1:
-            right = self.plateLines.verticalLinesp[v2].line
+            right = self.plateLines.verticalLines[v2].line
             left = right.getParalleLine(idealPixelWidth)
             missingSegmentPenalty += 1
             confidenceDiff += (1.0 - self.plateLines.verticalLines[v2].confidence)
@@ -115,11 +115,11 @@ class PlateCorners:
             bottom = self.plateLines.horizontalLines[h2].line
         elif h1 == -1 and h2 != -1:
             bottom = self.plateLines.horizontalLines[h2].line
-            top = bottom.getParallelLine(idealPixelHeight + extra_vertical_pixels)
+            top = bottom.getParalleLine(idealPixelHeight + extra_vertical_pixels)
             missingSegmengtPenalty += 1
         elif h1 !=-1 and h2 == -1:
             top = self.plateLines.horizontalLines[h2].line
-            bottom = top.getParallelLine(-1 * idealPixelHeight - extra_vertical_pixels)
+            bottom = top.getParalleLine(-1 * idealPixelHeight - extra_vertical_pixels)
         scoreKeeper.setScore("SCORING_MISSING_SEGMENT_PENALTY_HORIZONTAL", missingSegmengtPenalty, 1)
         if self.tlc.isAboveText(top) < 1 or self.tlc.isAboveText(bottom) > -1:
             return None
@@ -150,5 +150,5 @@ class PlateCorners:
         score = scoreKeeper.getTotal()
         if score < self.bestHorizontalScore:
             self.bestHorizontalScore = score
-            self.bestTop = LineSegment(top.p1[0], top.p1[1], self.top.p2[0], self.top.p2[1])
+            self.bestTop = LineSegment(top.p1[0], top.p1[1], top.p2[0], top.p2[1])
             self.bestBottom = LineSegment(bottom.p1[0], bottom.p1[1], bottom.p2[0], bottom.p2[1])

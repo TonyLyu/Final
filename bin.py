@@ -1,18 +1,17 @@
 import cv2
 import numpy as np
 import math
-
+import copy
 def produceThresholds(crop_img):
-
+    crop = copy.deepcopy(crop_img)
     thresholds = []
-
-    threshold0 = Wolf(crop_img, 3, 18, 18, 0.05 + (0 * 0.35), 128)
+    threshold0 = Wolf(crop, 3, 18, 18, 0.05 + (0 * 0.35), 128)
     threshold0 = cv2.bitwise_not(threshold0)
     thresholds.append(threshold0)
-    threshold1 = Wolf(crop_img, 3, 22, 22, 0.05 + (1 * 0.35), 128)
+    threshold1 = Wolf(crop, 3, 22, 22, 0.05 + (1 * 0.35), 128)
     threshold1 = cv2.bitwise_not(threshold1)
     thresholds.append(threshold1)
-    threshold2 = Wolf(crop_img, 2, 12, 12, 0.18, 128)
+    threshold2 = Wolf(crop, 2, 12, 12, 0.18, 128)
     threshold2 = cv2.bitwise_not(threshold2)
     thresholds.append(threshold2)
 
@@ -59,7 +58,7 @@ def calcLocalStats(im, map_m, map_s, winx, winy):
     return max_s, map_m, map_s, im
 
 def Wolf(image, version, winx, winy, k, dR):
-    img = image
+    img = copy.deepcopy(image)
     m = 0.0
     max_s = 0.0
     th = 0

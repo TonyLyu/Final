@@ -9,9 +9,11 @@ class TextLineColeection:
         self.charHeight = 0
         self.charAngle = 0
         for i in range(0, len(textLines)):
+            print "charHeight: %d" % textLines[i].lineHeight
             self.charHeight += textLines[i].lineHeight
             self.charAngle += textLines[i].angle
-
+        self.charHeight /= len(textLines)
+        self.charAngle /=  len(textLines)
         self.topCharArea = textLines[0].charBoxTop
         self.bottomCharArea = textLines[0].charBoxBottom
         for i in range(1, len(textLines)):
@@ -22,21 +24,27 @@ class TextLineColeection:
         self.longerSegment = self.bottomCharArea
         self.shorterSegment = self.topCharArea
         if self.topCharArea.length > self.bottomCharArea.length:
-            longerSegment = self.topCharArea
-            shorterSegment = self.bottomCharArea
+            self.longerSegment = self.topCharArea
+            self.shorterSegment = self.bottomCharArea
 
         self.findCenterHorizontal()
         self.findCenterVertical()
 
     def findCenterHorizontal(self):
         leftP1 = self.shorterSegment.closestPointOnSegmentTo(self.longerSegment.p1)
+
         leftP2 = self.longerSegment.p1
+
         left = linefinder.LineSegment(leftP1, leftP2)
         leftMidpoint = left.midpoint()
-        rightP1 = self.shorterSegment.closestPointOnSegmentTo(self.longerSegment.p1)
+
+        rightP1 = self.shorterSegment.closestPointOnSegmentTo(self.longerSegment.p2)
         rightp2 = self.longerSegment.p2
         right = linefinder.LineSegment(rightP1, rightp2)
         rightMidpoint = right.midpoint()
+        print "hhhhhhhhh"
+        print rightP1
+        print "@@@@@@@@@"
         self.centerHorizontalLine = linefinder.LineSegment(leftMidpoint, rightMidpoint)
 
     def findCenterVertical(self):

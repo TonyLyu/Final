@@ -15,26 +15,28 @@ def getKey(item):
 def characteranalysis(img_data):
 
     img = img_data.crop_gray
-    bin_img = img_data.thresholds
+    bin_img = copy.deepcopy(img_data.thresholds)
     b_img = copy.deepcopy(bin_img)
     allTextContours = []
     for i in range(0, len(bin_img)):
         tc = textcontours.textcontours(b_img[i], img)
         allTextContours.append(tc)
-
+        cv2.imshow("bin%d"%i, b_img[i])
     b_img = copy.deepcopy(bin_img)
 
     for i in range(0, len(bin_img)):
         # some problems
         allTextContours[i] = filter(b_img[i], allTextContours[i])
+        print "Threshold (%s) is %d" %(i, allTextContours[i].getGoodIndicesCount())
+
 
     plateMask = platemask.platemask(bin_img)
     plateMask.findOuterBoxMask(allTextContours)
-    hasPlateBorder = plateMask.hasplatemask
-    plateBorderMask = plateMask.getMask()
+    img_data.hasPlateBorder = plateMask.hasplatemask
+    img_data.plateBorderMask = plateMask.getMask()
     if plateMask.hasplatemask:
         for i in range(0, len(bin_img)):
-            allTextContours[i] = filterByOuterMask(allTextContours[i])
+            allTextContours[i] = filterByOuterMask(allTextContours[i], img_data.hasPlateBorder, img_data.plateBorderMask)
     bestFitScore = -1
     bestFitIndex = -1
 
@@ -50,17 +52,19 @@ def characteranalysis(img_data):
             bestFitIndex = i
             bestThreshold = bin_img[i]
             bestContours = allTextContours[i]
+    print "BestFitScore: %d, Index: %d"%(bestFitScore, bestFitIndex)
     if bestFitScore <= 1:
         print "low best fit score"
         return None
 
-
     img_contours = bestContours.drawContours(bestThreshold)
     cv2.imshow("bestThreshold", bestThreshold)
     cv2.imshow("Matching Contours", img_contours)
-    cv2.waitKey(0)
+
     lf = linefinder.LineFinder(img)
-    linePolygons = lf.findLines(img, bestContours)
+    cv2.imshow("fuck", img_data.crop_gray)
+    cv2.waitKey(0)
+    linePolygons = lf.findLines(img_data.crop_gray, bestContours)
     tempTextLines = []
     for i in range(0, len(linePolygons)):
         linePolygon = linePolygons[i]
@@ -74,11 +78,13 @@ def characteranalysis(img_data):
         tempTextLines.append(textLine)
 
     bestContours = filterBetweenLines(bestThreshold, bestContours, tempTextLines)
+
     tempTextLines = sorted(tempTextLines, key=getKey)
     ###textliens###
     textLines = []
     #################
     rows, cols = img.shape
+
     for i in range(0, len(tempTextLines)):
         updatedTextArea = getCharArea(tempTextLines[i].topLine, tempTextLines[i].bottomLine, bestContours)
         linePolygon = tempTextLines[i].linePolygon
@@ -97,7 +103,9 @@ def characteranalysis(img_data):
         elif absangle > 1:
             confidenceDrainers += absangle
 
-    return bin_img
+    img_data.textLines = textLines
+
+    return img_data
 
 def filter(threshold, tc):
     rows, cols = threshold.shape[:2]
@@ -157,7 +165,7 @@ def filterContourHoles(tc):
         parentIndex = tc.hierarchy[0][i][3]
 
         if parentIndex >= 0 and tc.goodIndices[parentIndex]:
-            k = 0
+            print "filterContourHoles:contour index: %d"% i
         else:
             tc.goodIndices[i] = True
     return tc
@@ -207,9 +215,12 @@ def getCharArea(topLine, bottomLine, bestContours):
         for z in range(0, len(bestContours.contours[i])):
             if bestContours.contours[i][z][0][0] < leftX:
                 leftX = bestContours.contours[i][z][0][0]
+                l = leftX
             if bestContours.contours[i][z][0][0] > rightX:
                 rightX = bestContours.contours[i][z][0][0]
     charArea = []
+
+
     if leftX != max and rightX != min:
         tl = (leftX, topLine.getPointAt(leftX))
         tr = (rightX, topLine.getPointAt(rightX))
@@ -230,9 +241,9 @@ def filterBetweenLines(img, textContours, textLines):
     rows, cols = img.shape
     outerMask = np.zeros((rows, cols), np.uint8)
     for i in range(0, len(textLines)):
-        print textLines[i].linePolygon
+
         lp = np.array(textLines[i].linePolygon, np.int32)
-        print lp
+
         outerMask = cv2.fillConvexPoly(outerMask, lp, (255, 255, 255))
     for i in range(0, textContours.size()):
         if textContours.goodIndices[i] == False:
@@ -241,6 +252,7 @@ def filterBetweenLines(img, textContours, textLines):
                                                             textContours.contours,
                                                             textContours.hierarchy,
                                                             i)
+
         if percentInsideMask < min_area_percent_within_lines:
             textContours.goodIndices[i] = False
             continue
@@ -249,22 +261,22 @@ def filterBetweenLines(img, textContours, textLines):
         topMiddle = (xmiddle, y)
         botMiddle = (xmiddle, y + h)
 
-        for i in range(0, len(textLines)):
-            closetTopPoint = textLines[i].topLine.closestPointOnSegmentTo(topMiddle)
-            closetBottomPoint = textLines[i].bottomLine.closestPointOnSegmentTo(botMiddle)
+        for j in range(0, len(textLines)):
+            closetTopPoint = textLines[j].topLine.closestPointOnSegmentTo(topMiddle)
+            closetBottomPoint = textLines[j].bottomLine.closestPointOnSegmentTo(botMiddle)
             absTopDistance = linefinder.distanceBetweenPoints(closetTopPoint, topMiddle)
             absBottomDistance = linefinder.distanceBetweenPoints(closetBottomPoint, botMiddle)
-            maxDistance = textLines[i].lineHeight * max_distance_percent_from_lines
+            maxDistance = textLines[j].lineHeight * max_distance_percent_from_lines
             if absTopDistance < maxDistance and absBottomDistance < maxDistance:
                 a = 0
             else:
-                textLines.goodIndices[i] = False
+                textContours.goodIndices[j] = False
     return textContours
 
 
 def getContourAreaPercentInsideMask(mask, contours, hierarchy, contourIndex):
     innerArea = np.zeros((mask.shape[0],mask.shape[1]), dtype="uint8")
-    cv2.drawContours(innerArea, contours, contourIndex,
+    innerArea = cv2.drawContours(innerArea, contours, contourIndex,
                      (255, 255, 255), cv2.FILLED, 8, hierarchy, 2)
     startingPixels = cv2.countNonZero(innerArea)
     innerArea = cv2.bitwise_and(innerArea, mask)

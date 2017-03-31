@@ -16,7 +16,7 @@ class ScoreKeeper:
     def getTotal(self):
         score = 0
         for i in range(0, len(self.weights)):
-            score += score[i] + self.weights[i]
+            score += self.scores[i] * self.weights[i]
         return score
 
     def size(self):

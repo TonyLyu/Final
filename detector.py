@@ -1,5 +1,5 @@
 import cv2
-
+from segment.rect import Rect
 def find_plates(img, maxWidth, maxHeight):
     img = cv2.equalizeHist(img)
     plate_cascade = cv2.CascadeClassifier('us.xml')
@@ -57,21 +57,33 @@ def detect(img):
     h = rows
     maxWidth = columns
     maxHeight = rows
+    scale_factor = computeScaleFactor(w, h)
+    if scale_factor != 1:
+        grayimg = cv2.resize(grayimg, dsize=(w*scale_factor, h*scale_factor))
 
     regions = find_plates(grayimg, maxWidth, maxHeight)
+    allregions = []
     imglist = []
     if(len(regions) != 0):
         new_regions = []
-        for region in regions:
-            o_region = expandRect(region, 0, 0, w, h)
+        for i in range(0, len(regions)):
+            regions[i][0] = regions[i][0] / scale_factor
+            regions[i][1] = regions[i][1] / scale_factor
+            regions[i][2] = regions[i][2] / scale_factor
+            regions[i][3] = regions[i][3] / scale_factor
+
+
+            o_region = expandRect(regions[i], 0, 0, w, h)
             new_regions.append(o_region)
         for (x, y, w, h) in new_regions:
+            one_region = Rect(x, y, w, h)
+            allregions.append(one_region)
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
             cv2.imshow('img', img)
             text_img = grayimg[y:y + h, x:x + w]
             text_img = cv2.resize(text_img, dsize=(120, 60))
             imglist.append(text_img)
-    return imglist
+    return imglist, allregions
 
 # def resize(img, grayimg, regions):
 #     rows, columns = grayimg.shape

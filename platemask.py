@@ -50,6 +50,7 @@ class platemask:
                 winningIndex = imgIndex
                 winningParentId = bestParentId
                 lowestArea = boxarea
+        print "Winning image index (findOOuterBoxMask) is : %d" % winningIndex
         if winningIndex != -1 and bestCharCount >= 3:
             mask = np.zeros(len(self.thresholds[winningIndex]), dtype = 'uint8')
             cv2.drawContours(mask, contours[winningIndex].contours, winningParentId,

@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
 import linefinder
+
 class Transformation:
+
     def __init__(self, bigImage, smallImage, x, y, width, height):
         self.bigImage = bigImage
         self.smallImage = smallImage
@@ -32,6 +34,10 @@ class Transformation:
         return self.getTransformationMatrix2(corners, quad_pts)
 
     def getTransformationMatrix2(self, corners, outputCorners):
+
+        corners = np.array(corners, np.float32)
+        outputCorners = np.array(outputCorners, np.float32)
+
         transmtx = cv2.getPerspectiveTransform(corners, outputCorners)
         return transmtx
 
@@ -54,13 +60,24 @@ class Transformation:
         if height > targetSize[1]:
             height = targetSize[1]
             width = round(float(height) * aspect)
-        return (width, height)
+        return (int(width), int(height))
     def crop(self, outputImageSize, transformationMatrix):
+        a = int(outputImageSize[0])
+        b = int(outputImageSize[1])
+        outputImageSize = (a, b)
         deskewed = cv2.warpPerspective(self.bigImage, transformationMatrix,
                                        outputImageSize, cv2.INTER_CUBIC)
+
+
         return deskewed
 
     def remapSmallPointstoCrop(self, smallPoints, transformationMatrix):
-        smallPoints = np.float32(smallPoints)
+        # smallPoints = np.float32(smallPoints)
+
+        smallPoints = np.array(smallPoints, np.float32)
+        smallPoints = np.array([smallPoints])
+
+        transformationMatrix = np.array(transformationMatrix, np.float32)
+
         remappedPoints = cv2.perspectiveTransform(smallPoints, transformationMatrix)
         return remappedPoints
