@@ -150,11 +150,11 @@ class LineSegment:
     def __init__(self, x1 = 0, y1 = 0, x2 = 0, y2 = 0):
 
         if isinstance(x1, tuple) and isinstance(y1, tuple):
-            self.p1 = (int(x1[0]), int(x1[1]))
-            self.p2 = (int(y1[0]), int(y1[1]))
+            self.p1 = (x1[0], x1[1])
+            self.p2 = (y1[0], y1[1])
         else:
-            self.p1 = (int(x1), int(y1))
-            self.p2 = (int(x2), int(y2))
+            self.p1 = (x1, y1)
+            self.p2 = (x2, y2)
         if self.p2[0] - self.p1[0] == 0:
             self.slope = 0.000001
         else:
@@ -216,7 +216,7 @@ class LineSegment:
             intersection_X = (c2 - c1) / (self.slope - line.slope)
             intersection_Y = self.slope * intersection_X + c1
 
-        return (int(round(intersection_X)), int(round(intersection_Y)))
+        return (int(intersection_X), int(intersection_Y))
 def distanceBetweenPoints(p1, p2):
     asquared = float(p2[0] - p1[0]) * (p2[0] - p1[0])
     bsquared = float(p2[1] - p1[1]) * (p2[1] - p1[1])

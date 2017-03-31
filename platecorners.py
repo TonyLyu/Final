@@ -42,7 +42,7 @@ class PlateCorners:
         corners.append(self.bestTop.intersection(self.bestLeft))
         corners.append(self.bestTop.intersection(self.bestRight))
         corners.append(self.bestBottom.intersection(self.bestRight))
-        corners.append(self.bestTop.intersection(self.bestLeft))
+        corners.append(self.bestBottom.intersection(self.bestLeft))
 
         return corners
 

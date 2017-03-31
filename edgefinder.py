@@ -88,7 +88,6 @@ class EdgeFinder:
         remappedCorners = imgTransform.transformSmallPointsTOBigImage(corners)
         cropSize = imgTransform.getCropSize(remappedCorners, (120, 60))
 
-
         transmtx = imgTransform.getTransformationMatrix1(remappedCorners, cropSize[0], cropSize[1])
         newCrop = imgTransform.crop(cropSize, transmtx)
         newLines = []
@@ -102,12 +101,14 @@ class EdgeFinder:
             newLines.append(textline.TextLine(textAreaRemapped[0], linePolygonRemapped[0],
                                               newCrop.shape[1], newCrop.shape[0]))
 
+
         smallPlateCorners = []
         if high_contrast:
             smallPlateCorners = self.highContrastDetection(newCrop, newLines)
         else:
              smallPlateCorners = self.normalDetection(newCrop, newLines)
-
+        print "smallPlateCorners: "
+        print smallPlateCorners
         imgArea = []
         imgArea.append((0, 0))
         imgArea.append((newCrop.shape[1], 0))
