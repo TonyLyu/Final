@@ -3,18 +3,18 @@ import copy
 import numpy as np
 from linefinder import LineSegment
 from bin import produceThresholds
-from rect import Rect
+from segment.rect import Rect
 from histogramvertical import HistogramVertical
 from linefinder import median
-
+import copy
 
 class CharacterSegmenter:
 
     def __init__(self, img_data):
         self.img_data = img_data
         self.confidence = 0
-
-        self.img_data.thresholds = produceThresholds(self.img_data.crop_gray)
+        an_img = copy.copy(img_data.crop_gray)
+        self.img_data.thresholds = produceThresholds(an_img)
         self.img_data.crop_gray = cv2.medianBlur(self.img_data.crop_gray, 3)
         self.top = LineSegment()
         self.bottom = LineSegment()
@@ -26,14 +26,18 @@ class CharacterSegmenter:
 
         for lineidx in range(len(self.img_data.textLines)):
             self.top = self.img_data.textLines[lineidx].topLine
-            self.bottom = self.img_data.textLines[lineidx].bottom
+            self.bottom = self.img_data.textLines[lineidx].bottomLine
 
             avgCharHeight = self.img_data.textLines[lineidx].lineHeight
             ####
             ###height_to_width_ratio = self.img_data.charHeightMM[lineidx] /
             height_to_width_ratio = 70 / 35.0
             avgCharWidth = avgCharHeight / height_to_width_ratio
-            self.removeSmallContours(self.img_data.thresholds, avgCharHeight, self.img_data.textLines[lineidx])
+            cv2.imshow("before", self.img_data.thresholds[0])
+
+            self.img_data.thresholds = self.removeSmallContours(self.img_data.thresholds, avgCharHeight, self.img_data.textLines[lineidx])
+            cv2.imshow("232434325", self.img_data.thresholds[0])
+            cv2.waitKey(0)
             allHistograms = []
             lineBoxes = []
             for i in range(0, len(self.img_data.thresholds)):
@@ -43,12 +47,14 @@ class CharacterSegmenter:
                 histogramMask = cv2.fillConvexPoly(histogramMask, lp, (255, 255, 255))
                 vertHistogram = HistogramVertical(self.img_data.thresholds[i], histogramMask)
                 score = 0.0
-                charBoxes = self.getHistogramBoxes(vertHistogram, avgCharWidth, avgCharHeight, score)
+                charBoxes, score = self.getHistogramBoxes(vertHistogram, avgCharWidth, avgCharHeight, score)
 
                 for z in range(0, len(charBoxes)):
                     lineBoxes.append(charBoxes[z])
 
+
             candidateBoxes = self.getBestCharBoxes(self.img_data.thresholds[0], lineBoxes, avgCharWidth)
+
             edge_mask = self.filterEdgeBoxes(self.img_data.thresholds, candidateBoxes, avgCharWidth, avgCharHeight)
             edge_filter_mask = cv2.bitwise_and(edge_filter_mask, edge_mask)
             candidateBoxes = self.combineCloseBoxes(candidateBoxes)
@@ -59,10 +65,15 @@ class CharacterSegmenter:
             for i in range(0, len(self.img_data.thresholds)):
                 self.img_data.thresholds[i] = cv2.bitwise_and(self.img_data.thresholds[i], edge_filter_mask)
             all_regions_combined = []
+
             for lidx in range(0, len(self.img_data.charRegions)):
                 for boxidx in range(0, len(self.img_data.charRegions[lidx])):
                     all_regions_combined.append(self.img_data.charRegions[lidx][boxidx])
+
             self.img_data.thresholds = self.cleanCharRegions(self.img_data.thresholds, all_regions_combined)
+
+
+        return self.img_data
 
 
     def getCharGap(self, leftBox, rightBox):
@@ -115,25 +126,36 @@ class CharacterSegmenter:
     def removeSmallContours(self, thresholds, avgHeight, textLine):
         min_contour_height = 0.3 * avgHeight
         textLineMask = np.zeros((thresholds[0].shape[0], thresholds[0].shape[1]), np.uint8)
-        textLineMask = cv2.fillConvexPoly(textLineMask, textLine.linePolygon, (255, 255, 255))
+        lp = np.array(textLine.linePolygon, np.int32)
+
+
+        textLineMask = cv2.fillConvexPoly(textLineMask, lp, (255, 255, 255))
+
         for i in range(0, len(thresholds)):
             contours = []
             hierarchy = []
-            thresholdsCopy = thresholds[i] * (textLine.astype(thresholds[i].dtype))
+            # thresholdsCopy = thresholds[i] * (textLineMask.astype(thresholds[i].dtype))
+            #thresholdsCopy = thresholds[i] * textLineMask
+
+            thresholdsCopy = cv2.bitwise_and(thresholds[i],thresholds[i], mask=textLineMask)
+
             img2, contours, hierarchy = cv2.findContours(thresholdsCopy, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             for c in range(0, len(contours)):
                 if len(contours[c]) == 0:
                     continue
                 x, y , weight, height = cv2.boundingRect(contours[c])
-                if height > min_contour_height:
+                if height < min_contour_height:
                     cv2.drawContours(thresholds[i], contours, c, (0, 0, 0), -1)
                     continue
+        return thresholds
     def getHistogramBoxes(self, histogram, avgCharWidth, avgCharHeight, score):
         min_histogram_height =avgCharHeight * 0.5
         max_segment_width = avgCharWidth * 1.35
-
+        print min_histogram_height
         pxLeniency = 2
         charBoxes = []
+        print "***********"
+        print histogram.get1DHits(pxLeniency)
         allBoxes = self.convert1DHitsToRect(histogram.get1DHits(pxLeniency), self.top, self.bottom)
 
         for i in range(0, len(allBoxes)):
@@ -162,22 +184,25 @@ class CharacterSegmenter:
     def getBestCharBoxes(self, img, charBoxes, avgCharWidth):
         rows, cols = img.shape[:2]
         max_segment_width = avgCharWidth * 1.35
-        histoImg = np.zeros((cols, rows), np.uint8)
+        histoImg = np.zeros((rows, cols), np.uint8)
         for col in range(0, cols):
             columnCount =0
             for i in range(0, len(charBoxes)):
+
                 if col >= charBoxes[i].x and col < (charBoxes[i].x + charBoxes[i].width):
                     columnCount += 1
             while(columnCount > 0):
                 histoImg.itemset((histoImg.shape[0] - columnCount, col), 255)
                 columnCount -= 1
-        histogram = HistogramVertical(histoImg, np.zeros((histoImg.shape[0], histoImg.shape[1]), np.uint8))
+        histogram = HistogramVertical(histoImg, np.ones((histoImg.shape[0], histoImg.shape[1]), np.uint8))
         bestRowIndex = 0
         bestRowScore = 0
         bestBoxes = []
         for row in range(0, histogram.histoImg.shape[0]):
             validBoxes = []
-            allBoxes = self.convert1DHitsToRect(histogram.getHeightAt(row), self.top, self.bottom)
+            allBoxes = self.convert1DHitsToRect(histogram.get1DHits(row), self.top, self.bottom)
+            print histogram.get1DHits(row)
+            print "all boxes size %d" % len(allBoxes)
             rowScore = 0.0
             for boxidx in range(0, len(allBoxes)):
                 w = allBoxes[boxidx].width
@@ -216,25 +241,30 @@ class CharacterSegmenter:
         min_contour_height_percent = 0.5
         boxScores = []
         for i in range(0, len(charRegions)):
-            boxScores[i] = 0
+            boxScores.append(0)
         for i in range(0, len(thresholds)):
             for j in range(len(charRegions)):
                 tempImg = np.zeros((thresholds[i].shape[0], thresholds[i].shape[1]), thresholds[i].dtype)
-                tempImg = cv2.rectangle(tempImg, (charRegions[j].x, charRegions[j].y),
-                                        (charRegions[j].x + charRegions[j].width, charRegions[j].y + charRegions[j].height),
+                tempImg = cv2.rectangle(tempImg, (int(charRegions[j].x), int(charRegions[j].y)),
+                                        (int(charRegions[j].x + charRegions[j].width), int(charRegions[j].y + charRegions[j].height)),
                                         (255, 255 ,255), cv2.FILLED)
                 tempImg = cv2.bitwise_and(thresholds[i], tempImg)
                 img2, contours, hi = cv2.findContours(tempImg, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 allPointsInBox = []
+                print "filter contours"
+                print contours[0][0][0]
+                print "**********"
                 for c in range(0, len(contours)):
                     if len(contours[c]) == 0:
                         continue
                     for z in range(0, len(contours[c])):
-                        allPointsInBox.append(contours[c][z])
+                        allPointsInBox.append(contours[c][z][0])
                 height = 0.0
-                if len(allPointsInBox) > 0:
-                    _, _, height, _ = cv2.boundingRect(allPointsInBox)
+                allPointsInBox = np.array(allPointsInBox, np.int32)
 
+                if len(allPointsInBox) > 0:
+                    _, _, _, height = cv2.boundingRect(allPointsInBox)
+                print "height is %d" % height
                 if height >= float(charRegions[j].height * min_contour_height_percent):
                     boxScores[j] = boxScores[j] + 1
         newCharRegions = []
@@ -304,8 +334,9 @@ class CharacterSegmenter:
             if leftEdge != 0 or rightEdge != thresholds[0].shape[1]:
                 mask = np.zeros((thresholds[0].shape[0], thresholds[0].shape[1]), np.uint8)
                 mask = cv2.bitwise_not(mask)
-                mask = cv2.rectangle(mask, (0, charRegions[0].y), (leftEdge, charRegions[0].y + charRegions[0].height), (0, 0, 0), -1)
-                mask = cv2.rectangle(mask, (rightEdge, charRegions[0].y), (mask.shape[1], charRegions[0].y + charRegions[0].height), (0, 0, 0), -1)
+
+                mask = cv2.rectangle(mask, (0, int(charRegions[0].y)), (int(leftEdge), int(charRegions[0].y + charRegions[0].height)), (0, 0, 0), -1)
+                mask = cv2.rectangle(mask, (int(rightEdge), int(charRegions[0].y)), (int(mask.shape[1]), int(charRegions[0].y + charRegions[0].height)), (0, 0, 0), -1)
 
                 if abs(self.top.angle > min_angle_for_rotation):
                     center = (mask.shape[1] / 2, mask.shape[0] / 2)
@@ -363,7 +394,7 @@ class CharacterSegmenter:
             topLeft = (hits[i][0], top.getPointAt(hits[i][0]) - 1)
             botRight = (hits[i][1], bottom.getPointAt(hits[i][1]) + 1)
             rect = Rect(topLeft, botRight)
-            boxes.append(Rect)
+            boxes.append(rect)
         return boxes
     def cleanCharRegions(self, thresholds, charRegions):
         min_speckle_height_percent = 0.13
@@ -378,13 +409,16 @@ class CharacterSegmenter:
             img2, contours, hi = cv2.findContours(tempImg, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for j in range(0, len(charRegions)):
                 min_speckle_height = float(charRegions[j].height) * min_speckle_height_percent
-                min_contour_area = float(charRegions[j].area) * min_contour_area_percent
+                min_contour_area = float(charRegions[j].area()) * min_contour_area_percent
                 tallestContourHeight = 0
                 totalArea = 0
+                print "len of contours is %d" % len(contours)
                 for c in range(0, len(contours)):
                     if len(contours[c]) == 0:
                         continue
-                    if charRegions[j].contains(contours[c][0]) == False:
+
+
+                    if charRegions[j].contains(contours[c][0][0]) == False:
                         continue
                     r_x, r_y, r_width, r_height = cv2.boundingRect(contours[c])
                     if r_height <= min_speckle_height or r_width <= min_speckle_width_px:
@@ -399,15 +433,18 @@ class CharacterSegmenter:
                     thresholds[i] = cv2.rectangle(thresholds[i], charRegions[j], (0, 0, 0), -1)
             morph_size = 1
             closureElement = cv2.getStructuringElement(2, (2 * morph_size + 1, 2 * morph_size +1), (morph_size, morph_size))
+
             thresholds[i] = cv2.morphologyEx(thresholds[i], cv2.MORPH_CLOSE, closureElement)
+
             for j in range(0, len(charRegions)):
-                thresholds[i] = cv2.line(thresholds[i], (charRegions[j].x - 1, charRegions[j].y),
-                                         (charRegions[j].x - 1, charRegions[j].y + charRegions[j].height),
+                thresholds[i] = cv2.line(thresholds[i], (int(charRegions[j].x - 1), int(charRegions[j].y)),
+                                         (int(charRegions[j].x - 1), int(charRegions[j].y + charRegions[j].height)),
                                          (0, 0, 0))
-                thresholds[i] = cv2.line(thresholds[i], (charRegions[j].x + charRegions[j].width + 1, charRegions[j].y),
-                                         (charRegions[j].x + charRegions[j].width + 1,
-                                          charRegions[j].y + charRegions[j].height),
+                thresholds[i] = cv2.line(thresholds[i], (int(charRegions[j].x + charRegions[j].width + 1), int(charRegions[j].y)),
+                                         (int(charRegions[j].x + charRegions[j].width + 1),
+                                          int(charRegions[j].y + charRegions[j].height)),
                                          (0, 0, 0))
+
         return thresholds
 
 

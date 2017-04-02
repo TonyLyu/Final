@@ -30,8 +30,9 @@ class Histogram:
                     max_col_size = columnCount
         histo_width = len(self.colHeights)
         histo_height = max_col_size + 10
-        self.histoImg = np.zeros((histo_width, histo_height), np.uint8)
-
+        print "histo_width is %d" % histo_width
+        print "histo_height is %d" % histo_height
+        self.histoImg = np.zeros((histo_height, histo_width), np.uint8)
         for col in range(0, self.histoImg.shape[1]):
             if col > len(self.colHeights):
                 break
@@ -104,7 +105,10 @@ class Histogram:
         onSegment = False
         curSegmentLength = 0
         for col in range(0, self.histoImg.shape[1]):
-            isOn = self.histoImg.item(self.histoImg.shape[0] - 1 - yOffset, col)
+
+            isOn = bool(self.histoImg.item(self.histoImg.shape[0] - 1 - yOffset, col))
+
+
             if isOn:
                 onSegment = True
                 curSegmentLength += 1

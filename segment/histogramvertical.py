@@ -1,8 +1,9 @@
 import histogram
 import cv2
 
+
 class HistogramVertical(histogram.Histogram):
 
     def __init__(self, inputImage, mask):
-
-        histogram.Histogram.analyzeImage(inputImage, mask, True)
+        histogram.Histogram.__init__(self)
+        histogram.Histogram.analyzeImage(self, inputImage, mask, True)

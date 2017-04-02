@@ -3,6 +3,8 @@ import cv2
 class Rect:
 
     def __init__(self, p1, p2, k=0, j=0):
+        self.width = 0
+        self.height = 0
         if k == 0 and j == 0:
             self.x = min(p1[0], p2[0])
             self.y = min(p1[1], p2[1])
@@ -14,8 +16,8 @@ class Rect:
             self.y = p2
             self.width = k
             self.height = j
-        self.p1 = (self.x, self.y)
-        self.p2 = (self.x + self.width, self.y + self.height)
+        self.p1 = (int(self.x), int(self.y))
+        self.p2 = (int(self.x + self.width), int(self.y + self.height))
 
     def tl(self):
 
