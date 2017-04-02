@@ -1,4 +1,5 @@
 import cv2
+import copy
 from segment.rect import Rect
 def find_plates(img, maxWidth, maxHeight):
     img = cv2.equalizeHist(img)
@@ -49,7 +50,8 @@ def analysis(thresh):
         return False, False
 
 
-def detect(img):
+def detect(image):
+    img = copy.deepcopy(image)
     if (img.shape[2] > 2):
         grayimg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     rows, columns = grayimg.shape

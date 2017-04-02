@@ -52,6 +52,8 @@ class Transformation:
                                           round(areaCorners[2][0]), round(areaCorners[2][1]))
         w = linefinder.distanceBetweenPoints(leftEdge.midpoint(), rightEdge.midpoint())
         h = linefinder.distanceBetweenPoints(bottomEdge.midpoint(), topEdge.midpoint())
+        print "h: %f" % h
+        print "w: %f" % w
         if w <= 0 or h <=0:
             return (0, 0)
         aspect = float(w) / h
@@ -62,9 +64,6 @@ class Transformation:
             width = round(float(height) * aspect)
         return (int(width), int(height))
     def crop(self, outputImageSize, transformationMatrix):
-        a = int(outputImageSize[0])
-        b = int(outputImageSize[1])
-        outputImageSize = (a, b)
         deskewed = cv2.warpPerspective(self.bigImage, transformationMatrix,
                                        outputImageSize, cv2.INTER_CUBIC)
 

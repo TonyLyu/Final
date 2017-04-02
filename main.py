@@ -7,6 +7,7 @@ import characteran
 from edgefinder import EdgeFinder
 from transformation import Transformation
 from textline import TextLine
+from segment.ocr import OCR
 import numpy as np
 img = cv2.imread('1.jpg')
 img_data = ImageData(img)
@@ -30,6 +31,8 @@ img_data.plate_corners = edgeFinder.findEdgeCorners()
 img_data = edgeFinder.img_data
 img_data.plate_corners = img_data.plate_corners[0]
 expandRegion = img_data.regionOfInterest
+print img_data.plate_corners
+print expandRegion.x, expandRegion.y, expandRegion.width, expandRegion.height
 imgTransform = Transformation(img_data.grayImg, img_data.crop_gray, expandRegion.x, expandRegion.y, expandRegion.width, expandRegion.height)
 orcImageWidthPx = round(120.0 * 1.3333333)
 orcImageHeightPx = round(60 * 1.3333333)
@@ -40,12 +43,12 @@ projectPoints = img_data.plate_corners
 projectPoints = np.array(projectPoints, np.float32)
 print cropSize
 img_data.color_deskewed = np.zeros((cropSize[0], cropSize[1]), dtype=img_data.colorImg.dtype)
-rows, cols = img_data.color_deskewed.shape[:2]
+cols1, rows1 = img_data.color_deskewed.shape
 deskewed_points = []
 deskewed_points.append((0, 0))
-deskewed_points.append((cols, 0))
-deskewed_points.append((cols, rows))
-deskewed_points.append((0, rows))
+deskewed_points.append((cols1, 0))
+deskewed_points.append((cols1, rows1))
+deskewed_points.append((0, rows1))
 deskewed_points = np.array(deskewed_points, np.float32)
 color_transmtx = cv2.getPerspectiveTransform(projectPoints, deskewed_points)
 print deskewed_points
@@ -55,7 +58,7 @@ if len(img_data.color_deskewed.shape) > 2:
     img_data.crop_gray = cv2.cvtColor(img_data.color_deskewed, cv2.COLOR_BGR2GRAY)
 else:
     img_data.crop_gray = copy.deepcopy(img_data.color_deskewed)
-cv2.imshow("qu", img_data.color_deskewed)
+cv2.imshow("2312312", img_data.crop_gray)
 cv2.waitKey(0)
 newLines = []
 for i in range(0, len(img_data.textLines)):
@@ -63,18 +66,16 @@ for i in range(0, len(img_data.textLines)):
     linePolygon = imgTransform.transformSmallPointsTOBigImage(img_data.textLines[i].linePolygon)
     textAreaRemapped = imgTransform.remapSmallPointstoCrop(textArea, transmtx)
     linePolygonRemapped = imgTransform.remapSmallPointstoCrop(linePolygon, transmtx)
+    newLines.append(TextLine(textAreaRemapped[0], linePolygonRemapped[0], img_data.crop_gray.shape[1],
+                                                                     img_data.crop_gray.shape[0]))
 
-    newLines.append(TextLine(textAreaRemapped[0], linePolygonRemapped, img_data.crop_gray.shape[0],
-                                                                     img_data.crop_gray.shape[1]))
 img_data.textLines = []
 for i in range (0, len(newLines)):
     img_data.textLines.append(newLines[i])
-
-
-for i in range(0, len(img_data.thresholds)):
-    cv2.imshow("%d"%i, img_data.thresholds[i])
-    print i
-cv2.imshow("12345", img_data.crop_gray)
+# print "textLines: "
+# print img_data.textLines
+ocr = OCR()
+ocr.performOCR(img_data)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 

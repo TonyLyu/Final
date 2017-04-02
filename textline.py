@@ -11,9 +11,9 @@ class TextLine:
         textAreaInts = []
         linePolygonInts = []
         for i in range(0, len(textArea)):
-            textAreaInts.append((round(textArea[i][0]), round(textArea[i][1])))
+            textAreaInts.append((int(round(textArea[i][0])), int(round(textArea[i][1]))))
         for i in range(0, len(linePolygon)):
-            linePolygonInts.append((round(linePolygon[i][0]), round(linePolygon[i][1])))
+            linePolygonInts.append((int(round(linePolygon[i][0])), int(round(linePolygon[i][1]))))
         self.initialize(textAreaInts, linePolygonInts, width, height)
 
 
