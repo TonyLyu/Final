@@ -41,6 +41,9 @@ class EdgeFinder:
 
 
         elif tlc.longerSegment.length > tlc.charHeight * 3:
+            print "tlc longerSegment : "
+            print tlc.longerSegment.length
+            print tlc.charHeight
             charHeightToPlateWidthRatio = 304.8 / 70
             idealPixelWidth = tlc.charHeight * (charHeightToPlateWidthRatio * 1.03)
 
@@ -86,6 +89,8 @@ class EdgeFinder:
                                                      self.img_data.regionOfInterest.height)
 
         remappedCorners = imgTransform.transformSmallPointsTOBigImage(corners)
+        print "remappedCorners at first"
+        print remappedCorners
         cropSize = imgTransform.getCropSize(remappedCorners, (120, 60))
 
         transmtx = imgTransform.getTransformationMatrix1(remappedCorners, cropSize[0], cropSize[1])
@@ -97,7 +102,7 @@ class EdgeFinder:
             textAreaRemapped = imgTransform.remapSmallPointstoCrop(textArea, transmtx)
 
             linePolygonRemapped = imgTransform.remapSmallPointstoCrop(linePolygon, transmtx)
-
+            print linePolygonRemapped
             newLines.append(textline.TextLine(textAreaRemapped[0], linePolygonRemapped[0],
                                               newCrop.shape[1], newCrop.shape[0]))
 
@@ -107,8 +112,8 @@ class EdgeFinder:
             smallPlateCorners = self.highContrastDetection(newCrop, newLines)
         else:
              smallPlateCorners = self.normalDetection(newCrop, newLines)
-        print "smallPlateCorners: "
         print smallPlateCorners
+
         imgArea = []
         imgArea.append((0, 0))
         imgArea.append((newCrop.shape[1], 0))
@@ -197,20 +202,22 @@ class EdgeFinder:
 
     def is_high_contrast(self, crop):
         stride = 2
-        rows = crop.shape[0]
-        cols = crop.shape[1] / stride
+        rows = int(crop.shape[0])
+        cols = int(crop.shape[1] / stride)
         avg_intensity = 0
         for y in range(0, rows):
-            for x in range(0, cols, stride):
+            for x in range(0, crop.shape[1], stride):
                 avg_intensity += crop.item(y, x)
         avg_intensity = avg_intensity / float(rows * cols * 255)
         contrast = 0
         for y in range(0, rows):
-            for x in range(0, cols, stride):
+            for x in range(0, crop.shape[1], stride):
                 contrast += pow( ((crop.item(y, x) / 255.0) - avg_intensity), 2.0)
 
         contrast /= float(rows) * float(cols)
         contrast = pow(contrast, 0.5)
-
+        print crop.shape
+        print "contrast:"
+        print contrast
         return contrast > 0.3
 

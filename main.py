@@ -39,6 +39,9 @@ orcImageHeightPx = round(60 * 1.3333333)
 
 cropSize = imgTransform.getCropSize(img_data.plate_corners, (orcImageWidthPx, orcImageHeightPx))
 transmtx = imgTransform.getTransformationMatrix1(img_data.plate_corners, cropSize[0], cropSize[1])
+print img_data.plate_corners
+print "cropSIze"
+print cropSize
 projectPoints = copy.deepcopy(img_data.plate_corners)
 projectPoints = np.array(projectPoints, np.float32)
 
@@ -66,10 +69,12 @@ print "lineHeight"
 newLines = []
 for i in range(0, len(img_data.textLines)):
     textArea = imgTransform.transformSmallPointsTOBigImage(img_data.textLines[i].textArea)
-    print textArea
+
     linePolygon = imgTransform.transformSmallPointsTOBigImage(img_data.textLines[i].linePolygon)
     textAreaRemapped = imgTransform.remapSmallPointstoCrop(textArea, transmtx)
+
     linePolygonRemapped = imgTransform.remapSmallPointstoCrop(linePolygon, transmtx)
+    print linePolygonRemapped
     newLines.append(TextLine(textAreaRemapped[0], linePolygonRemapped[0], img_data.crop_gray.shape[1],
                                                                      img_data.crop_gray.shape[0]))
     for line in linePolygonRemapped:

@@ -62,9 +62,10 @@ class Transformation:
             height = targetSize[1]
             width = round(float(height) * aspect)
         return (int(width), int(height))
+
     def crop(self, outputImageSize, transformationMatrix):
         deskewed = cv2.warpPerspective(self.bigImage, transformationMatrix,
-                                       outputImageSize, cv2.INTER_CUBIC)
+                                       outputImageSize, flags=cv2.INTER_CUBIC)
 
 
         return deskewed
@@ -75,7 +76,7 @@ class Transformation:
         smallPoints = np.array(smallPoints, np.float32)
         smallPoints = np.array([smallPoints])
 
-        transformationMatrix = np.array(transformationMatrix, np.float32)
+        # transformationMatrix = np.array(transformationMatrix, np.float32)
 
         remappedPoints = cv2.perspectiveTransform(smallPoints, transformationMatrix)
         return remappedPoints

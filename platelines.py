@@ -17,9 +17,11 @@ class PlateLines:
             return
         elif avgPixelIntensity[0] <= 3:
             return
+        print "avgPixelIntensity: "
+        print avgPixelIntensity
         smoothed = cv2.bilateralFilter(inputImage, 3, 45, 45)
         edges = cv2.Canny(smoothed, 66, 133)
-        cv2.imshow("testagain", edges)
+
         mask = np.zeros((inputImage.shape[0], inputImage.shape[1]), dtype="uint8")
         for i in range(0, len(textLines)):
             polygons = []
@@ -31,7 +33,6 @@ class PlateLines:
         edges = cv2.bitwise_and(edges, mask)
         hlines = self.getLines(edges, sensitivity, False)
         vlines = self.getLines(edges, sensitivity, True)
-
 
         for i in range(0, len(hlines)):
             self.horizontalLines.append(hlines[i])
@@ -64,10 +65,16 @@ class PlateLines:
         else:
             sensitivity = int(horizontal_sensitivity * (1.0 / sensitivityMultiplier))
         allLines = cv2.HoughLines(edges, 1, math.pi/180.0, sensitivity, srn=0, stn=0)
+        print sensitivity
+        print math.pi/180
+
+
 
         for i in range(0, len(allLines)):
+
             rho = allLines[i][0][0]
             theta = allLines[i][0][1]
+
             pt1 = pt2 = (0, 0)
             a = math.cos(theta)
             b = math.sin(theta)
@@ -80,7 +87,8 @@ class PlateLines:
             x2 = round(x0 - 1000 * (-b))
             y2 = round(y0 - 1000 * (a))
             pt2 = (x2, y2)
-
+            print pt1
+            print pt2
             if vertical:
                 if angle < 20 or angle > 340 or (angle > 160 and angle < 210):
                     if pt1[1] <= pt2[1]:

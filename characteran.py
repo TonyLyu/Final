@@ -73,7 +73,8 @@ def characteranalysis(img_data):
         bottomLine = linefinder.LineSegment(linePolygon[3][0], linePolygon[3][1],
                                             linePolygon[2][0], linePolygon[2][1])
         textArea = getCharArea(topLine, bottomLine, bestContours)
-
+        print "textArea1*********"
+        print textArea
         textLine = textline.TextLine(textArea, linePolygon, img.shape[1], img.shape[0])
         tempTextLines.append(textLine)
         print textLine.lineHeight
@@ -224,10 +225,10 @@ def getCharArea(topLine, bottomLine, bestContours):
 
 
     if leftX != max and rightX != min:
-        tl = (leftX, topLine.getPointAt(leftX))
-        tr = (rightX, topLine.getPointAt(rightX))
-        br = (rightX, bottomLine.getPointAt(rightX))
-        bl = (leftX, bottomLine.getPointAt(leftX))
+        tl = (int(leftX), int(topLine.getPointAt(leftX)))
+        tr = (int(rightX), int(topLine.getPointAt(rightX)))
+        br = (int(rightX), int(bottomLine.getPointAt(rightX)))
+        bl = (int(leftX), int(bottomLine.getPointAt(leftX)))
         charArea.append(tl)
         charArea.append(tr)
         charArea.append(br)
