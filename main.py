@@ -41,7 +41,7 @@ cropSize = imgTransform.getCropSize(img_data.plate_corners, (orcImageWidthPx, or
 transmtx = imgTransform.getTransformationMatrix1(img_data.plate_corners, cropSize[0], cropSize[1])
 projectPoints = img_data.plate_corners
 projectPoints = np.array(projectPoints, np.float32)
-print cropSize
+
 img_data.color_deskewed = np.zeros((cropSize[0], cropSize[1]), dtype=img_data.colorImg.dtype)
 cols1, rows1 = img_data.color_deskewed.shape
 deskewed_points = []
@@ -51,14 +51,16 @@ deskewed_points.append((cols1, rows1))
 deskewed_points.append((0, rows1))
 deskewed_points = np.array(deskewed_points, np.float32)
 color_transmtx = cv2.getPerspectiveTransform(projectPoints, deskewed_points)
-print deskewed_points
+
 img_data.color_deskewed = cv2.warpPerspective(img_data.colorImg, color_transmtx, (img_data.color_deskewed.shape[0],
-                                                                                  img_data.color_deskewed.shape[1]))
+                                                                         img_data.color_deskewed.shape[1]))
+cv2.imshow("3gray", img_data.crop_gray)
+
 if len(img_data.color_deskewed.shape) > 2:
     img_data.crop_gray = cv2.cvtColor(img_data.color_deskewed, cv2.COLOR_BGR2GRAY)
 else:
     img_data.crop_gray = copy.deepcopy(img_data.color_deskewed)
-cv2.imshow("2312312", img_data.crop_gray)
+cv2.imshow("4gray", img_data.crop_gray)
 cv2.waitKey(0)
 newLines = []
 for i in range(0, len(img_data.textLines)):
