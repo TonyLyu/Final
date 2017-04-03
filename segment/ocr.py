@@ -37,7 +37,10 @@ class OCR:
         with tesserocr.PyTessBaseAPI() as api:
             space_char_code = 32
             recognized_chars = []
-
+            api.Init("", "lus")
+            api.SetVariable("save_blob_choices", "T")
+            api.SetVariable("debug_file", "/dev/null")
+            api.SetPageSegMode(tesserocr.PSM.SINGLE_CHAR)
             for i in range(0, len(img_data.thresholds)):
                 img_data.thresholds[i] = cv2.bitwise_not(img_data.thresholds[i])
                 # cv2.imwrite("233.jpg", img_data.thresholds[i])
@@ -45,8 +48,8 @@ class OCR:
                 cv2.waitKey(0)
                 img = Image.fromarray(img_data.thresholds[i])
 
-                #api.SetImage(img)
-                api.SetImageFile("233.jpg")
+                api.SetImage(img)
+
                 absolute_charpos = 0
                 for j in range(0, len(img_data.charRegions[line_idx])):
 
@@ -56,9 +59,8 @@ class OCR:
                     print expandedRegion.y
                     print expandedRegion.width
                     print expandedRegion.height
-                    #api.SetRectangle(expandedRegion.x, expandedRegion.y, expandedRegion.width, expandedRegion.height)
+                    api.SetRectangle(expandedRegion.x, expandedRegion.y, expandedRegion.width, expandedRegion.height)
 
-                    api.SetRectangle(0, 0, 180, 80)
                     api.Recognize()
                     ri = api.GetIterator()
                     level = tesserocr.RIL.SYMBOL

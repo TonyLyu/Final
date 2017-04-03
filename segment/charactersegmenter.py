@@ -14,7 +14,9 @@ class CharacterSegmenter:
         self.img_data = img_data
         self.confidence = 0
         an_img = copy.copy(img_data.crop_gray)
+
         self.img_data.thresholds = produceThresholds(an_img)
+
         self.img_data.crop_gray = cv2.medianBlur(self.img_data.crop_gray, 3)
         self.top = LineSegment()
         self.bottom = LineSegment()
@@ -62,17 +64,18 @@ class CharacterSegmenter:
             self.img_data.charRegions.append(candidateBoxes)
             for cboxidx in range(0, len(candidateBoxes)):
                 self.img_data.charRegionsFlat.append(candidateBoxes[cboxidx])
-            for i in range(0, len(self.img_data.thresholds)):
-                self.img_data.thresholds[i] = cv2.bitwise_and(self.img_data.thresholds[i], edge_filter_mask)
-            all_regions_combined = []
+        for i in range(0, len(self.img_data.thresholds)):
+            self.img_data.thresholds[i] = cv2.bitwise_and(self.img_data.thresholds[i], edge_filter_mask)
+        all_regions_combined = []
 
-            for lidx in range(0, len(self.img_data.charRegions)):
-                for boxidx in range(0, len(self.img_data.charRegions[lidx])):
-                    all_regions_combined.append(self.img_data.charRegions[lidx][boxidx])
+        for lidx in range(0, len(self.img_data.charRegions)):
+            for boxidx in range(0, len(self.img_data.charRegions[lidx])):
+                all_regions_combined.append(self.img_data.charRegions[lidx][boxidx])
 
-            self.img_data.thresholds = self.cleanCharRegions(self.img_data.thresholds, all_regions_combined)
+        self.img_data.thresholds = self.cleanCharRegions(self.img_data.thresholds, all_regions_combined)
 
-
+        cv2.imshow("eee", self.img_data.thresholds[0])
+        cv2.waitKey(0)
         return self.img_data
 
 
@@ -428,9 +431,10 @@ class CharacterSegmenter:
                             tallestContourHeight = r_height
                         totalArea += cv2.contourArea(contours[c])
                 if totalArea < min_contour_area:
-                    thresholds[i] = cv2.rectangle(thresholds[i], charRegions[j], (0, 0, 0), -1)
+
+                    thresholds[i] = cv2.rectangle(thresholds[i], charRegions[j].p1, charRegions[j].p2, (0, 0, 0), -1)
                 elif tallestContourHeight < float(charRegions[j].height) * min_contour_height_percent:
-                    thresholds[i] = cv2.rectangle(thresholds[i], charRegions[j], (0, 0, 0), -1)
+                    thresholds[i] = cv2.rectangle(thresholds[i], charRegions[j].p1, charRegions[j].p2, (0, 0, 0), -1)
             morph_size = 1
             closureElement = cv2.getStructuringElement(2, (2 * morph_size + 1, 2 * morph_size +1), (morph_size, morph_size))
 
