@@ -44,9 +44,11 @@ class TextLine:
         self.charBoxLeft = linefinder.LineSegment(textArea[3][0], textArea[3][1], textArea[0][0],textArea[0][1])
         self.charBoxRight = linefinder.LineSegment(textArea[2][0], textArea[2][1], textArea[1][0], textArea[1][1])
         x = float(linePolygon[1][0]) / 2
-        midpoint = (x, self.bottomLine.getPointAt(x))
+        midpoint = (int(x), int(self.bottomLine.getPointAt(x)))
         acrossFromMidpoint = self.topLine.closestPointOnSegmentTo(midpoint)
-
+        print "midpoint : "
+        print midpoint
+        print acrossFromMidpoint
         self.lineHeight = linefinder.distanceBetweenPoints(midpoint, acrossFromMidpoint)
         self.lineHeight = self.lineHeight - 1
         self.angle = (self.topLine.angle + self.bottomLine.angle) / 2

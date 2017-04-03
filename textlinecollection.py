@@ -9,7 +9,7 @@ class TextLineColeection:
         self.charHeight = 0
         self.charAngle = 0
         for i in range(0, len(textLines)):
-            print "charHeight: %d" % textLines[i].lineHeight
+
             self.charHeight += textLines[i].lineHeight
             self.charAngle += textLines[i].angle
         self.charHeight /= len(textLines)
@@ -42,9 +42,7 @@ class TextLineColeection:
         rightp2 = self.longerSegment.p2
         right = linefinder.LineSegment(rightP1, rightp2)
         rightMidpoint = right.midpoint()
-        print "hhhhhhhhh"
-        print rightP1
-        print "@@@@@@@@@"
+
         self.centerHorizontalLine = linefinder.LineSegment(leftMidpoint, rightMidpoint)
 
     def findCenterVertical(self):

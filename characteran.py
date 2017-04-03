@@ -21,7 +21,6 @@ def characteranalysis(img_data):
     for i in range(0, len(bin_img)):
         tc = textcontours.textcontours(b_img[i], img)
         allTextContours.append(tc)
-        cv2.imshow("bin%d"%i, b_img[i])
     b_img = copy.deepcopy(bin_img)
 
     for i in range(0, len(bin_img)):
@@ -62,9 +61,10 @@ def characteranalysis(img_data):
     cv2.imshow("Matching Contours", img_contours)
 
     lf = linefinder.LineFinder(img)
-    cv2.imshow("fuck", img_data.crop_gray)
-    cv2.waitKey(0)
+
     linePolygons = lf.findLines(img_data.crop_gray, bestContours)
+    print "***linePolygons***"
+    print linePolygons
     tempTextLines = []
     for i in range(0, len(linePolygons)):
         linePolygon = linePolygons[i]
@@ -76,6 +76,7 @@ def characteranalysis(img_data):
 
         textLine = textline.TextLine(textArea, linePolygon, img.shape[1], img.shape[0])
         tempTextLines.append(textLine)
+        print textLine.lineHeight
 
     bestContours = filterBetweenLines(bestThreshold, bestContours, tempTextLines)
 
@@ -104,7 +105,8 @@ def characteranalysis(img_data):
             confidenceDrainers += absangle
 
     img_data.textLines = textLines
-
+    print "another textline "
+    print img_data.textLines[0].lineHeight
     return img_data
 
 def filter(threshold, tc):

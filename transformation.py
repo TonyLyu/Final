@@ -52,8 +52,7 @@ class Transformation:
                                           round(areaCorners[2][0]), round(areaCorners[2][1]))
         w = linefinder.distanceBetweenPoints(leftEdge.midpoint(), rightEdge.midpoint())
         h = linefinder.distanceBetweenPoints(bottomEdge.midpoint(), topEdge.midpoint())
-        print "h: %f" % h
-        print "w: %f" % w
+
         if w <= 0 or h <=0:
             return (0, 0)
         aspect = float(w) / h

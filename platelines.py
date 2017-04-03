@@ -20,7 +20,6 @@ class PlateLines:
         smoothed = cv2.bilateralFilter(inputImage, 3, 45, 45)
         edges = cv2.Canny(smoothed, 66, 133)
         cv2.imshow("testagain", edges)
-        cv2.waitKey(0)
         mask = np.zeros((inputImage.shape[0], inputImage.shape[1]), dtype="uint8")
         for i in range(0, len(textLines)):
             polygons = []

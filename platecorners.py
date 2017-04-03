@@ -1,5 +1,5 @@
 import cv2
-
+import copy
 
 from scorekeeper import ScoreKeeper
 from textlinecollection import TextLineColeection
@@ -34,6 +34,20 @@ class PlateCorners:
                 if v1 == v2 and v1 != -1:
                     continue
                 self.scoreVerticals(v1, v2)
+        ##show
+        imgCorner = copy.deepcopy(self.inputImage)
+        imgCorner = cv2.cvtColor(imgCorner, cv2.COLOR_GRAY2RGB)
+        for linenum in range(0, len(self.textLines)):
+            for i in range(0, 4):
+                imgCorner = cv2.circle(imgCorner, self.textLines[linenum].textArea[i], 2, (0, 0, 0))
+        print "besttop "
+
+        imgCorner = cv2.line(imgCorner, self.bestTop.p1, self.bestTop.p2, (255, 0, 0), 1, cv2.LINE_AA)
+        imgCorner = cv2.line(imgCorner, self.bestRight.p1, self.bestRight.p2, (0, 0, 255), 1, cv2.LINE_AA)
+        imgCorner = cv2.line(imgCorner, self.bestBottom.p1, self.bestBottom.p2, (0, 0, 255), 1, cv2.LINE_AA)
+        imgCorner = cv2.line(imgCorner, self.bestLeft.p1, self.bestLeft.p2, (255, 0, 0), 1, cv2.LINE_AA)
+        cv2.imshow("winning top and bottom lines", imgCorner)
+        ##end
         if self.bestLeft.p1[0] == 0 and self.bestLeft.p1[1] ==0 and self.bestLeft.p2[0] == 0 and self.bestLeft.p2[1]:
             self.img_data.disqualified = True
         elif self.bestTop.p1[0] == 0 and self.bestTop.p1[1] ==0 and self.bestTop.p2[0] == 0 and self.bestTop.p2[1]:

@@ -107,7 +107,6 @@ class LineFinder:
         tempImg = cv2.line(tempImg, topLines[bestScoreIndex].p1, topLines[bestScoreIndex].p2, (0, 0, 255), 2)
         tempImg = cv2.line(tempImg, bottomLines[bestScoreIndex].p1, bottomLines[bestScoreIndex].p2, (0, 0, 255), 2)
         cv2.imshow("winning lines", tempImg)
-        cv2.waitKey(0)
 
         bestStripe.append(topLines[bestScoreIndex].p1)
         bestStripe.append(topLines[bestScoreIndex].p2)
@@ -124,10 +123,10 @@ class LineFinder:
             return extended
         top = LineSegment(charArea[0][0], charArea[0][1], charArea[1][0], charArea[1][1])
         bottom = LineSegment(charArea[3][0], charArea[3][1], charArea[2][0], charArea[2][1])
-        topLeft = (0, top.getPointAt(0))
-        topRight = (width, top.getPointAt(width))
-        bottomRight = (width, bottom.getPointAt(width))
-        bottomLeft = (0, bottom.getPointAt(0))
+        topLeft = (0, int(top.getPointAt(0)))
+        topRight = (int(width), int(top.getPointAt(width)))
+        bottomRight = (int(width), int(bottom.getPointAt(width)))
+        bottomLeft = (0, int(bottom.getPointAt(0)))
         extended.append(topLeft)
         extended.append(topRight)
         extended.append(bottomRight)
@@ -150,11 +149,11 @@ class LineSegment:
     def __init__(self, x1 = 0, y1 = 0, x2 = 0, y2 = 0):
 
         if isinstance(x1, tuple) and isinstance(y1, tuple):
-            self.p1 = (x1[0], x1[1])
-            self.p2 = (y1[0], y1[1])
+            self.p1 = (int(x1[0]), int(x1[1]))
+            self.p2 = (int(y1[0]), int(y1[1]))
         else:
-            self.p1 = (x1, y1)
-            self.p2 = (x2, y2)
+            self.p1 = (int(x1), int(y1))
+            self.p2 = (int(x2), int(y2))
         if self.p2[0] - self.p1[0] == 0:
             self.slope = 0.000001
         else:
@@ -185,7 +184,7 @@ class LineSegment:
         u = float(top) / bottom
         x = self.p1[0] + u * (self.p2[0] - self.p1[0])
         y = self.p1[1] + u * (self.p2[1] - self.p1[1])
-        return (x, y)
+        return (int(x), int(y))
 
     def isPointBelowLine(self, tp):
         return ((self.p2[0] - self.p1[0]) * (tp[1] - self.p1[1]) -
@@ -199,7 +198,7 @@ class LineSegment:
         diff = self.p2[0] - self.p1[0]
         midX = float(self.p1[0]) + (float(diff) / 2)
         midY = self.getPointAt(midX)
-        return (midX, midY)
+        return (int(midX), int(midY))
 
     def intersection(self, line):
         intersection_X = -1
