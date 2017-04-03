@@ -4,6 +4,7 @@ import tesserocr
 from OcrChar import OcrChar
 from PIL import Image
 import copy
+import os
 from rect import Rect
 class OCR:
     def __init__(self):
@@ -14,10 +15,28 @@ class OCR:
         img_data = seg.segment()
 
         absolute_charpos = 0
-
+        result = []
         for line_idx in range(0, len(img_data.textLines)):
             chars = self.recognize_line(line_idx, img_data)
-            print chars
+            confidence = 0
+            bestChar = None
+            for char in chars:
+                # print "******"
+                # print char.char_index
+                # print char.letter
+                # print char.confidence
+                # print "********"
+
+                if char.char_index == absolute_charpos:
+                    if char.confidence > confidence:
+                        bestChar = char
+                        confidence = char.confidence
+                if char.char_index > absolute_charpos and isinstance(bestChar, OcrChar):
+                    result.append(bestChar.letter)
+                    absolute_charpos += 1
+                    confidence = 0
+        print result
+
     def expandRect(self, original, expandXPixels, expandYPixels, maxX, maxY):
         expandedRegion = copy.deepcopy(original)
         halfX = round(expandXPixels / 2.0)
@@ -37,28 +56,24 @@ class OCR:
         with tesserocr.PyTessBaseAPI() as api:
             space_char_code = 32
             recognized_chars = []
-            api.Init("", "lus")
+            l = os.path.dirname(__file__)
+            api.Init(l, "lus")
             api.SetVariable("save_blob_choices", "T")
             api.SetVariable("debug_file", "/dev/null")
             api.SetPageSegMode(tesserocr.PSM.SINGLE_CHAR)
             for i in range(0, len(img_data.thresholds)):
+
                 img_data.thresholds[i] = cv2.bitwise_not(img_data.thresholds[i])
-                # cv2.imwrite("233.jpg", img_data.thresholds[i])
-                cv2.imshow("234123", img_data.thresholds[0])
-                cv2.waitKey(0)
+
                 img = Image.fromarray(img_data.thresholds[i])
 
                 api.SetImage(img)
 
                 absolute_charpos = 0
+
                 for j in range(0, len(img_data.charRegions[line_idx])):
 
                     expandedRegion = self.expandRect(img_data.charRegions[line_idx][j], 2, 2, img_data.thresholds[i].shape[1], img_data.thresholds[i].shape[0])
-                    print "finaaly"
-                    print expandedRegion.x
-                    print expandedRegion.y
-                    print expandedRegion.width
-                    print expandedRegion.height
                     api.SetRectangle(expandedRegion.x, expandedRegion.y, expandedRegion.width, expandedRegion.height)
 
                     api.Recognize()
@@ -68,11 +83,14 @@ class OCR:
                     for r in tesserocr.iterate_level(ri, level):
                         # symbol = ri.GetUTF8Text(level)
                         symbol = r.GetUTF8Text(level)
-                        print symbol
                         conf = r.Confidence(level)
                         fontindex = 0
                         pointsize = 0
                         fontName = r.WordFontAttributes()
+                        if isinstance(fontName, dict):
+                            pointsize = fontName.get('pointsize')
+                            fontindex = fontName.get('font_id')
+
                         if symbol != 0 and symbol[0] != space_char_code and pointsize >= 6:
                             c = OcrChar()
                             c.char_index = absolute_charpos
@@ -80,20 +98,19 @@ class OCR:
                             c.letter = str(symbol)
                             recognized_chars.append(c)
                             indent = False
-                            ci = tesserocr.PyChoiceIterator(ri)
-                            while True:
+                            ci = r.GetChoiceIterator()
+                            for c in ci:
                                 choice = ci.GetUTF8Text()
                                 c2 = OcrChar()
                                 c2.char_index = absolute_charpos
-                                c2.confidence = ci.Confidence()
+                                c2.confidence = c.Confidence()
                                 c2.letter = str(choice)
                                 if str(symbol) != str(choice):
                                     recognized_chars.append(c2)
                                 else:
                                     recognized_chars.append(c2)
                                 indent = True
-                                if not ci.Next():
-                                    break
+
                         del symbol
                         if not ri.Next(level):
                                 break
