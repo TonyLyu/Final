@@ -35,7 +35,7 @@ class OCR:
                     result.append(bestChar.letter)
                     absolute_charpos += 1
                     confidence = 0
-        print result
+
 
     def expandRect(self, original, expandXPixels, expandYPixels, maxX, maxY):
         expandedRegion = copy.deepcopy(original)
@@ -53,6 +53,7 @@ class OCR:
             expandedRegion.height = maxY - expandedRegion.y
         return expandedRegion
     def recognize_line(self, line_idx, img_data):
+        cv2.imshow("final", img_data.thresholds[0])
         with tesserocr.PyTessBaseAPI() as api:
             space_char_code = 32
             recognized_chars = []

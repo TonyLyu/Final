@@ -31,15 +31,14 @@ class CharacterSegmenter:
             self.bottom = self.img_data.textLines[lineidx].bottomLine
 
             avgCharHeight = self.img_data.textLines[lineidx].lineHeight
-            print "avgCharHeight"
-            print avgCharHeight
+
             # avgCharHeight = 70
             ####
             ###height_to_width_ratio = self.img_data.charHeightMM[lineidx] /
             height_to_width_ratio = 70 / 35.0
             avgCharWidth = avgCharHeight / height_to_width_ratio
 
-
+            cv2.imshow("before", self.img_data.thresholds[0])
             self.img_data.thresholds = self.removeSmallContours(self.img_data.thresholds, avgCharHeight, self.img_data.textLines[lineidx])
 
             allHistograms = []
@@ -48,24 +47,36 @@ class CharacterSegmenter:
                 histogramMask = np.zeros((self.img_data.thresholds[i].shape[0],
                                           self.img_data.thresholds[i].shape[1]), np.uint8)
                 lp = np.array(self.img_data.textLines[lineidx].linePolygon, np.int32)
+
                 histogramMask = cv2.fillConvexPoly(histogramMask, lp, (255, 255, 255))
                 vertHistogram = HistogramVertical(self.img_data.thresholds[i], histogramMask)
-                cv2.imshow("histogram", vertHistogram.histoImg)
-                cv2.waitKey(0)
+                cv2.imshow("histogram %d" % i, vertHistogram.histoImg)
                 score = 0.0
                 charBoxes, score = self.getHistogramBoxes(vertHistogram, avgCharWidth, avgCharHeight, score)
 
                 for z in range(0, len(charBoxes)):
                     lineBoxes.append(charBoxes[z])
+            cv2.imshow("after", self.img_data.thresholds[0])
+
             print "lineBoxes: "
-            print lineBoxes[0].x
-            print lineBoxes[0].y
-            print lineBoxes[0].width
-            print lineBoxes[0].height
+            for lineBox in lineBoxes:
+                print lineBox.x
+                print lineBox.y
+                print lineBox.width
+                print lineBox.height
+                print "-----------------------------";
             print avgCharHeight
             print avgCharWidth
             candidateBoxes = self.getBestCharBoxes(self.img_data.thresholds[0], lineBoxes, avgCharWidth)
-            ##show
+            print "***********cnadidateBoxes**********"
+            for box in candidateBoxes:
+                print box.x
+                print box.y
+                print box.width
+                print box.height
+                print "-------------------------"
+
+            #show
             cleanStages = []
             for threshold in self.img_data.thresholds:
                 cleanImg = np.zeros((threshold.shape[0], threshold.shape[1]), threshold.dtype)
@@ -79,7 +90,6 @@ class CharacterSegmenter:
             cv2.imshow("clean1", cleanStages[0])
             cv2.imshow("clean2", cleanStages[1])
             cv2.imshow("clean3", cleanStages[2])
-            cv2.waitKey(0)
             ##end
             edge_mask = self.filterEdgeBoxes(self.img_data.thresholds, candidateBoxes, avgCharWidth, avgCharHeight)
             edge_filter_mask = cv2.bitwise_and(edge_filter_mask, edge_mask)
@@ -98,7 +108,7 @@ class CharacterSegmenter:
 
         self.img_data.thresholds = self.cleanCharRegions(self.img_data.thresholds, all_regions_combined)
 
-
+        cv2.waitKey(0)
 
         return self.img_data
 
@@ -178,17 +188,11 @@ class CharacterSegmenter:
     def getHistogramBoxes(self, histogram, avgCharWidth, avgCharHeight, score):
         min_histogram_height =avgCharHeight * 0.5
         max_segment_width = avgCharWidth * 1.35
-        print "min_histogram_height is %f" % min_histogram_height
         pxLeniency = 2
         charBoxes = []
 
         allBoxes = self.convert1DHitsToRect(histogram.get1DHits(pxLeniency), self.top, self.bottom)
-        for box in allBoxes:
-            print box.x
-            print box.y
-            print box.width
-            print box.height
-            print "************"
+
         for i in range(0, len(allBoxes)):
             if allBoxes[i].width >= 4 and allBoxes[i].width <= max_segment_width and allBoxes[i].height > min_histogram_height:
                 charBoxes.append(allBoxes[i])
@@ -263,7 +267,7 @@ class CharacterSegmenter:
                         validBoxes.append(Rect(topLeft, allBoxes[boxidx].br()))
             if rowScore > bestRowScore:
                 bestRowScore = rowScore
-                bestRowScore = row
+                bestRowIndex = row
                 bestBoxes = validBoxes
 
         return bestBoxes
@@ -419,8 +423,8 @@ class CharacterSegmenter:
     def convert1DHitsToRect(self, hits, top, bottom):
         boxes = []
         for i in range(0, len(hits)):
-            topLeft = (hits[i][0], top.getPointAt(hits[i][0]) - 1)
-            botRight = (hits[i][1], bottom.getPointAt(hits[i][1]) + 1)
+            topLeft = (int(hits[i][0]), int(top.getPointAt(hits[i][0]) - 1))
+            botRight = (int(hits[i][1]), int(bottom.getPointAt(hits[i][1]) + 1))
             rect = Rect(topLeft, botRight)
             boxes.append(rect)
         return boxes
@@ -439,13 +443,7 @@ class CharacterSegmenter:
             for j in range(0, len(charRegions)):
                 min_speckle_height = float(charRegions[j].height) * min_speckle_height_percent
                 min_contour_area = float(charRegions[j].area()) * min_contour_area_percent
-                print "****"
-                print charRegions[j].x
-                print charRegions[j].y
 
-                print charRegions[j].width
-                print charRegions[j].height
-                print "*****"
                 tallestContourHeight = 0
                 totalArea = 0
 

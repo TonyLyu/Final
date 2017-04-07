@@ -24,7 +24,7 @@ class Rect:
         return (self.x, self.y)
 
     def br(self):
-        return (self.x + self.width, self.y + self.height)
+        return (int(self.x + self.width), int(self.y + self.height))
     def size(self):
         return (self.width, self.height)
     def area(self):
