@@ -46,9 +46,7 @@ class TextLine:
         x = float(linePolygon[1][0]) / 2
         midpoint = (int(x), int(self.bottomLine.getPointAt(x)))
         acrossFromMidpoint = self.topLine.closestPointOnSegmentTo(midpoint)
-        print "midpoint : "
-        print midpoint
-        print acrossFromMidpoint
+
         self.lineHeight = linefinder.distanceBetweenPoints(midpoint, acrossFromMidpoint)
         self.lineHeight = self.lineHeight - 1
         self.angle = (self.topLine.angle + self.bottomLine.angle) / 2

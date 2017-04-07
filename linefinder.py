@@ -208,9 +208,9 @@ class LineSegment:
         if (self.slope - line.slope) == 0:
             k = 0
         elif self.p1[0] == self.p2[0]:
-            return (self.p1[0], line.getPointAt(self.p1[0]))
+            return (int(self.p1[0]), int(line.getPointAt(self.p1[0])))
         elif line.p1[0] == line.p2[0]:
-            return (line.p1[0], self.getPointAt(line.p1[0]))
+            return (int(line.p1[0]), int(self.getPointAt(line.p1[0])))
         else:
             intersection_X = (c2 - c1) / (self.slope - line.slope)
             intersection_Y = self.slope * intersection_X + c1
@@ -222,8 +222,8 @@ def distanceBetweenPoints(p1, p2):
     return math.sqrt(asquared + bsquared)
 
 def angleBetweenPoints(p1, p2):
-    deltaY = int(p2[1] - p1[1])
-    deltaX = int(p2[0] - p1[0])
+    deltaY = p2[1] - p1[1]
+    deltaX = p2[0] - p1[0]
 
     return math.atan2(float(deltaY), float(deltaX)) * (180 / math.pi)
 def findClosestPoint(polygon_points, num_points, position):

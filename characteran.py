@@ -63,8 +63,7 @@ def characteranalysis(img_data):
     lf = linefinder.LineFinder(img)
 
     linePolygons = lf.findLines(img_data.crop_gray, bestContours)
-    print "***linePolygons***"
-    print linePolygons
+
     tempTextLines = []
     for i in range(0, len(linePolygons)):
         linePolygon = linePolygons[i]
@@ -73,11 +72,9 @@ def characteranalysis(img_data):
         bottomLine = linefinder.LineSegment(linePolygon[3][0], linePolygon[3][1],
                                             linePolygon[2][0], linePolygon[2][1])
         textArea = getCharArea(topLine, bottomLine, bestContours)
-        print "textArea1*********"
-        print textArea
+
         textLine = textline.TextLine(textArea, linePolygon, img.shape[1], img.shape[0])
         tempTextLines.append(textLine)
-        print textLine.lineHeight
 
     bestContours = filterBetweenLines(bestThreshold, bestContours, tempTextLines)
 
@@ -106,8 +103,7 @@ def characteranalysis(img_data):
             confidenceDrainers += absangle
 
     img_data.textLines = textLines
-    print "another textline "
-    print img_data.textLines[0].lineHeight
+
     return img_data
 
 def filter(threshold, tc):

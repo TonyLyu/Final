@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import math
 import linefinder
+import copy
 
 class PlateLines:
     def __init__(self, img_data = None):
@@ -17,8 +18,7 @@ class PlateLines:
             return
         elif avgPixelIntensity[0] <= 3:
             return
-        print "avgPixelIntensity: "
-        print avgPixelIntensity
+
         smoothed = cv2.bilateralFilter(inputImage, 3, 45, 45)
         edges = cv2.Canny(smoothed, 66, 133)
 
@@ -38,23 +38,26 @@ class PlateLines:
             self.horizontalLines.append(hlines[i])
         for i in range(0, len(vlines)):
             self.verticalLines.append(vlines[i])
-        debug = False
+        debug = True
         if debug:
-            debugImgHoriz = debugImgVert = edges
+            debugImgHoriz = copy.deepcopy(edges)
+            debugImgVert = copy.deepcopy(edges)
             debugImgHoriz = cv2.cvtColor(debugImgHoriz, cv2.COLOR_GRAY2RGB)
             debugImgVert = cv2.cvtColor(debugImgVert, cv2.COLOR_GRAY2RGB)
-            for i  in  range(0, len(self.horizontalLines)):
+            for i in range(0, len(self.horizontalLines)):
                 cv2.line(debugImgHoriz, self.horizontalLines[i].line.p1,
                          self.horizontalLines[i].line.p2, (0, 0, 255),
                          1, cv2.LINE_AA)
-            for i  in  range(0, len(self.verticalLines)):
-                cv2.line(debugImgHoriz, self.verticalLines[i].line.p1,
+            for i in range(0, len(self.verticalLines)):
+                cv2.line(debugImgVert, self.verticalLines[i].line.p1,
                         self.verticalLines[i].line.p2, (0, 0, 255),
                          1, cv2.LINE_AA)
 
             images = []
             images.append(debugImgHoriz)
             images.append(debugImgVert)
+            for i in range(0, len(images)):
+                cv2.imshow("Hough Lines %d" % i, images[i])
 
     def getLines(self, edges, sensitivityMultiplier, vertical):
         horizontal_sensitivity = 45
@@ -65,8 +68,7 @@ class PlateLines:
         else:
             sensitivity = int(horizontal_sensitivity * (1.0 / sensitivityMultiplier))
         allLines = cv2.HoughLines(edges, 1, math.pi/180.0, sensitivity, srn=0, stn=0)
-        print sensitivity
-        print math.pi/180
+
 
 
 
@@ -87,8 +89,7 @@ class PlateLines:
             x2 = round(x0 - 1000 * (-b))
             y2 = round(y0 - 1000 * (a))
             pt2 = (x2, y2)
-            print pt1
-            print pt2
+
             if vertical:
                 if angle < 20 or angle > 340 or (angle > 160 and angle < 210):
                     if pt1[1] <= pt2[1]:

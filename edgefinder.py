@@ -25,9 +25,7 @@ class EdgeFinder:
         tlc = TextLineColeection(self.img_data.textLines)
         corners = []
         rows, cols = self.img_data.crop_gray.shape
-        print high_contrast
-        print "longerSegment length is %d" % tlc.longerSegment.length
-        print "charHeight : %d" % tlc.charHeight
+
         if(high_contrast):
             expandX = int (float(cols) * 0.5)
             expandY = int(float(rows) * 0.5)
@@ -41,9 +39,7 @@ class EdgeFinder:
 
 
         elif tlc.longerSegment.length > tlc.charHeight * 3:
-            print "tlc longerSegment : "
-            print tlc.longerSegment.length
-            print tlc.charHeight
+
             charHeightToPlateWidthRatio = 304.8 / 70
             idealPixelWidth = tlc.charHeight * (charHeightToPlateWidthRatio * 1.03)
 
@@ -62,10 +58,7 @@ class EdgeFinder:
             topRight = topLine.intersection(rightLine)
             botRight = bottomLine.intersection(rightLine)
             botLeft = bottomLine.intersection(leftLine)
-            print "centerHorizontaling"
-            print tlc.centerHorizontalLine.p1
-            print tlc.centerHorizontalLine.p2
-            print "++++++++++"
+
             corners.append(topLeft)
             corners.append(topRight)
             corners.append(botRight)
@@ -89,8 +82,7 @@ class EdgeFinder:
                                                      self.img_data.regionOfInterest.height)
 
         remappedCorners = imgTransform.transformSmallPointsTOBigImage(corners)
-        print "remappedCorners at first"
-        print remappedCorners
+ 
         cropSize = imgTransform.getCropSize(remappedCorners, (120, 60))
 
         transmtx = imgTransform.getTransformationMatrix1(remappedCorners, cropSize[0], cropSize[1])
@@ -102,7 +94,6 @@ class EdgeFinder:
             textAreaRemapped = imgTransform.remapSmallPointstoCrop(textArea, transmtx)
 
             linePolygonRemapped = imgTransform.remapSmallPointstoCrop(linePolygon, transmtx)
-            print linePolygonRemapped
             newLines.append(textline.TextLine(textAreaRemapped[0], linePolygonRemapped[0],
                                               newCrop.shape[1], newCrop.shape[0]))
 
@@ -112,7 +103,7 @@ class EdgeFinder:
             smallPlateCorners = self.highContrastDetection(newCrop, newLines)
         else:
              smallPlateCorners = self.normalDetection(newCrop, newLines)
-        print smallPlateCorners
+
 
         imgArea = []
         imgArea.append((0, 0))
@@ -132,6 +123,7 @@ class EdgeFinder:
 
         plateLines.preocessImage(newCrop, newLines, 1.05)
         cornerFinder = PlateCorners(newCrop, plateLines, self.img_data, newLines)
+
 
         return cornerFinder.findPlateCorners()
 
@@ -216,8 +208,6 @@ class EdgeFinder:
 
         contrast /= float(rows) * float(cols)
         contrast = pow(contrast, 0.5)
-        print crop.shape
-        print "contrast:"
-        print contrast
+
         return contrast > 0.3
 

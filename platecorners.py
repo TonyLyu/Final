@@ -24,6 +24,7 @@ class PlateCorners:
     def findPlateCorners(self):
         horizontalLines = len(self.plateLines.horizontalLines)
         verticalLines = len(self.plateLines.verticalLines)
+
         for h1 in range(-1, horizontalLines):
             for h2 in range(-1, horizontalLines):
                 if h1 == h2 and h1 != -1:
@@ -40,7 +41,7 @@ class PlateCorners:
         for linenum in range(0, len(self.textLines)):
             for i in range(0, 4):
                 imgCorner = cv2.circle(imgCorner, self.textLines[linenum].textArea[i], 2, (0, 0, 0))
-        print "besttop "
+
 
         imgCorner = cv2.line(imgCorner, self.bestTop.p1, self.bestTop.p2, (255, 0, 0), 1, cv2.LINE_AA)
         imgCorner = cv2.line(imgCorner, self.bestRight.p1, self.bestRight.p2, (0, 0, 255), 1, cv2.LINE_AA)
@@ -48,10 +49,13 @@ class PlateCorners:
         imgCorner = cv2.line(imgCorner, self.bestLeft.p1, self.bestLeft.p2, (255, 0, 0), 1, cv2.LINE_AA)
         cv2.imshow("winning top and bottom lines", imgCorner)
         ##end
-        if self.bestLeft.p1[0] == 0 and self.bestLeft.p1[1] ==0 and self.bestLeft.p2[0] == 0 and self.bestLeft.p2[1]:
+        if self.bestLeft.p1[0] == 0 and self.bestLeft.p1[1] ==0 and self.bestLeft.p2[0] == 0 and self.bestLeft.p2[1] == 0:
             self.img_data.disqualified = True
-        elif self.bestTop.p1[0] == 0 and self.bestTop.p1[1] ==0 and self.bestTop.p2[0] == 0 and self.bestTop.p2[1]:
+        elif self.bestTop.p1[0] == 0 and self.bestTop.p1[1] ==0 and self.bestTop.p2[0] == 0 and self.bestTop.p2[1] == 0:
             self.img_data.disqualified = True
+
+
+
         corners = []
         corners.append(self.bestTop.intersection(self.bestLeft))
         corners.append(self.bestTop.intersection(self.bestRight))
@@ -69,16 +73,19 @@ class PlateCorners:
         confidenceDiff = 0
         missingSegmentPenalty = 0
 
+
         if v1 == -1 and v2 == -1:
-            left = self.tlc.centerVerticalLine.getParalleLine(-1 * idealPixelWidth / 2)
-            right = self.tlc.centerVerticalLine.getParalleLine(idealPixelWidth / 2)
+            left = self.tlc.centerVerticalLine.getParalleLine(-1 * idealPixelWidth / 2.0)
+            right = self.tlc.centerVerticalLine.getParalleLine(idealPixelWidth / 2.0)
             missingSegmentPenalty = 2
             confidenceDiff += 2
+
         elif v1 != -1 and v2 != -1:
             left = self.plateLines.verticalLines[v1].line
             right = self.plateLines.verticalLines[v2].line
             confidenceDiff += (1.0 - self.plateLines.verticalLines[v1].confidence)
             confidenceDiff += (1.0 - self.plateLines.verticalLines[v2].confidence)
+
         elif v1 == -1 and v2 != -1:
             right = self.plateLines.verticalLines[v2].line
             left = right.getParalleLine(idealPixelWidth)
@@ -94,7 +101,7 @@ class PlateCorners:
         if self.tlc.isLeftOfText(left) < 1 or self.tlc.isLeftOfText(right) > -1:
             return None
         perpendicularCharAngle = self.tlc.charAngle - 90
-        charanglediff = abs(perpendicularCharAngle - left.angle)
+        charanglediff = abs(perpendicularCharAngle - left.angle) + abs(perpendicularCharAngle - right.angle)
         scoreKeeper.setScore("SCORING_ANGLE_MATCHES_LPCHARS_WEIGHT", charanglediff, 1.1)
         leftMidLinePoint = left.closestPointOnSegmentTo(self.tlc.centerVerticalLine.midpoint())
         rightMidLinePoint = right.closestPointOnSegmentTo(self.tlc.centerHorizontalLine.midpoint())
@@ -106,7 +113,10 @@ class PlateCorners:
         scoreKeeper.setScore("SCORING_DISTANCE_WEIGHT_VERTICAL",plateDistance, 4.0)
         score = scoreKeeper.getTotal()
 
+
+
         if score < self.bestVerticalScore:
+
             self.bestVerticalScore = score
             self.bestLeft = LineSegment(left.p1[0], left.p1[1], left.p2[0], left.p2[1])
             self.bestRight = LineSegment(right.p1[0], right.p1[1], right.p2[0], right.p2[1])
@@ -120,10 +130,12 @@ class PlateCorners:
         extra_vertical_pixels = 3
         charHeightToPlateHeightRatio = 152.4 / 70
         idealPixelHeight = self.tlc.charHeight * charHeightToPlateHeightRatio
+
         missingSegmengtPenalty = 0
         if h1 == -1 and h2 == -1:
             top  =self.tlc.centerHorizontalLine.getParalleLine(idealPixelHeight / 2)
             bottom = self.tlc.centerHorizontalLine.getParalleLine(-1 * idealPixelHeight / 2)
+            missingSegmengtPenalty = 2
         elif h1 != -1 and h2 != -1:
             top = self.plateLines.horizontalLines[h1].line
             bottom = self.plateLines.horizontalLines[h2].line
@@ -132,9 +144,11 @@ class PlateCorners:
             top = bottom.getParalleLine(idealPixelHeight + extra_vertical_pixels)
             missingSegmengtPenalty += 1
         elif h1 !=-1 and h2 == -1:
-            top = self.plateLines.horizontalLines[h2].line
+            top = self.plateLines.horizontalLines[h1].line
             bottom = top.getParalleLine(-1 * idealPixelHeight - extra_vertical_pixels)
+            missingSegmengtPenalty += 1
         scoreKeeper.setScore("SCORING_MISSING_SEGMENT_PENALTY_HORIZONTAL", missingSegmengtPenalty, 1)
+
         if self.tlc.isAboveText(top) < 1 or self.tlc.isAboveText(bottom) > -1:
             return None
 
@@ -144,6 +158,9 @@ class PlateCorners:
         plateHeightPx = distanceBetweenPoints(topPoint, botPoint)
         heightRatio = self.tlc.charHeight / float(plateHeightPx)
         idealHeightRatio = ( 70.0 / 152.4 )
+
+
+
         heightRatioDiff = abs(heightRatio - idealHeightRatio)
 
         scoreKeeper.setScore("SCORING_PLATEHEIGHT_WEIGHT", heightRatioDiff, 2.2)
@@ -160,9 +177,13 @@ class PlateCorners:
 
         scoreKeeper.setScore("SCORING_TOP_BOTTOM_SPACE_VS_CHARHEIGHT_WEIGHT", middleScore, 2.0)
         charanglediff = abs(self.tlc.charAngle - top.angle) + abs(self.tlc.charAngle - bottom.angle)
+
+
         scoreKeeper.setScore("SCORING_ANGLE_MATCHES_LPCHARS_WEIGHT", charanglediff, 1.1)
         score = scoreKeeper.getTotal()
+
         if score < self.bestHorizontalScore:
+
             self.bestHorizontalScore = score
             self.bestTop = LineSegment(top.p1[0], top.p1[1], top.p2[0], top.p2[1])
             self.bestBottom = LineSegment(bottom.p1[0], bottom.p1[1], bottom.p2[0], bottom.p2[1])

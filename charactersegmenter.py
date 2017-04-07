@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from linefinder import LineSegment
+from bin import produceThresholds
 class CharacterSegmenter:
 
     def __init__(self, img_data):

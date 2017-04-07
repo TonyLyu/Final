@@ -1,3 +1,4 @@
+
 import cv2
 import detector
 import bin
@@ -39,9 +40,7 @@ orcImageHeightPx = round(60 * 1.3333333)
 
 cropSize = imgTransform.getCropSize(img_data.plate_corners, (orcImageWidthPx, orcImageHeightPx))
 transmtx = imgTransform.getTransformationMatrix1(img_data.plate_corners, cropSize[0], cropSize[1])
-print img_data.plate_corners
-print "cropSIze"
-print cropSize
+
 projectPoints = copy.deepcopy(img_data.plate_corners)
 projectPoints = np.array(projectPoints, np.float32)
 
@@ -64,7 +63,7 @@ if len(img_data.color_deskewed.shape) > 2:
 else:
     img_data.crop_gray = copy.deepcopy(img_data.color_deskewed)
 cv2.imshow("4gray", img_data.crop_gray)
-print "lineHeight"
+
 
 newLines = []
 for i in range(0, len(img_data.textLines)):
@@ -74,19 +73,19 @@ for i in range(0, len(img_data.textLines)):
     textAreaRemapped = imgTransform.remapSmallPointstoCrop(textArea, transmtx)
 
     linePolygonRemapped = imgTransform.remapSmallPointstoCrop(linePolygon, transmtx)
-    print linePolygonRemapped
+
     newLines.append(TextLine(textAreaRemapped[0], linePolygonRemapped[0], img_data.crop_gray.shape[1],
                                                                      img_data.crop_gray.shape[0]))
-    for line in linePolygonRemapped:
-        print line
+
 img_data.textLines = []
 for i in range (0, len(newLines)):
     img_data.textLines.append(newLines[i])
 # print "textLines: "
 # print img_data.textLines
+cv2.waitKey(0)
 ocr = OCR()
 ocr.performOCR(img_data)
-cv2.waitKey(0)
+
 cv2.destroyAllWindows()
 
 # if len(imgplates) != 0:
