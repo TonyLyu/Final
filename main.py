@@ -10,7 +10,7 @@ from transformation import Transformation
 from textline import TextLine
 from segment.ocr import OCR
 import numpy as np
-img = cv2.imread('2.png')
+img = cv2.imread('1.png')
 img_data = ImageData(img)
 rows, cols = img.shape[:2]
 grays, regions = detector.detect(img)
@@ -88,20 +88,3 @@ ocr.performOCR(img_data)
 
 cv2.destroyAllWindows()
 
-# if len(imgplates) != 0:
-#     for imgplate in imgplates:
-#         k = 0
-#         cv2.imshow('just', imgplate)
-#         bin_img = bin.Wolf(imgplate, 3, 18, 18, 0.05 + (k * 0.35), 128)
-#         bin_img = cv2.bitwise_not(bin_img)
-#         contours = textcontours.getTextContours(bin_img)
-#         # cv2.drawContours(bin_img, contours, -1, (0,255,0), 1)
-#         textcontours.drawContours(bin_img, contours)
-#         cv2.imshow('plate', bin_img)
-#         print textcontours.height
-#     cv2.waitKey(0)
-#     cv2.destroyAllWindows()
-#
-#
-# else:
-#     print("no plate")
