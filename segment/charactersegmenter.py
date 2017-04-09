@@ -58,23 +58,23 @@ class CharacterSegmenter:
                     lineBoxes.append(charBoxes[z])
             cv2.imshow("after", self.img_data.thresholds[0])
 
-            print "lineBoxes: "
-            for lineBox in lineBoxes:
-                print lineBox.x
-                print lineBox.y
-                print lineBox.width
-                print lineBox.height
-                print "-----------------------------";
-            print avgCharHeight
-            print avgCharWidth
+            # print "lineBoxes: "
+            # for lineBox in lineBoxes:
+            #     print lineBox.x
+            #     print lineBox.y
+            #     print lineBox.width
+            #     print lineBox.height
+            #     print "-----------------------------";
+            # print avgCharHeight
+            # print avgCharWidth
             candidateBoxes = self.getBestCharBoxes(self.img_data.thresholds[0], lineBoxes, avgCharWidth)
-            print "***********cnadidateBoxes**********"
-            for box in candidateBoxes:
-                print box.x
-                print box.y
-                print box.width
-                print box.height
-                print "-------------------------"
+            # print "***********cnadidateBoxes**********"
+            # for box in candidateBoxes:
+            #     print box.x
+            #     print box.y
+            #     print box.width
+            #     print box.height
+            #     print "-------------------------"
 
             #show
             cleanStages = []
@@ -107,7 +107,7 @@ class CharacterSegmenter:
                 all_regions_combined.append(self.img_data.charRegions[lidx][boxidx])
 
         self.img_data.thresholds = self.cleanCharRegions(self.img_data.thresholds, all_regions_combined)
-
+        cv2.imshow("final thre", self.img_data.thresholds[0])
         cv2.waitKey(0)
 
         return self.img_data

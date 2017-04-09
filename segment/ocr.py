@@ -3,6 +3,7 @@ import cv2
 import tesserocr
 from OcrChar import OcrChar
 from PIL import Image
+from resultprocess import ResultProcess
 import copy
 import os
 from rect import Rect
@@ -10,31 +11,40 @@ class OCR:
     def __init__(self):
         pass
     def performOCR(self, img_data):
-
+        postResultMaxCharacters = 8
         seg = CharacterSegmenter(img_data)
         img_data = seg.segment()
+        resultProcess = ResultProcess()
+        resultProcess.setConfidenceThreshold(65, 80)
+
 
         absolute_charpos = 0
         result = []
         for line_idx in range(0, len(img_data.textLines)):
             chars = self.recognize_line(line_idx, img_data)
-            confidence = 0
-            bestChar = None
-            for char in chars:
-                # print "******"
-                # print char.char_index
-                # print char.letter
-                # print char.confidence
-                # print "********"
+            for i in range(0, len(chars)):
+                line_order_index = line_idx * postResultMaxCharacters + chars[i].char_index
+                resultProcess.addLetter(chars[i].letter, line_idx, line_order_index, chars[i].confidence)
+            # confidence = 0
+            # bestChar = None
+            # for char in chars:
+            #     print "******"
+            #     print char.char_index
+            #     print char.letter
+            #     print char.confidence
+            #     print "********"
+            #
+            #     if char.char_index == absolute_charpos:
+            #         if char.confidence > confidence:
+            #             bestChar = char
+            #             confidence = char.confidence
+            #     if char.char_index > absolute_charpos and isinstance(bestChar, OcrChar):
+            #         result.append(bestChar.letter)
+            #         absolute_charpos += 1
+            #         confidence = 0
+            for letter in resultProcess.letters:
+                print letter[0].letter
 
-                if char.char_index == absolute_charpos:
-                    if char.confidence > confidence:
-                        bestChar = char
-                        confidence = char.confidence
-                if char.char_index > absolute_charpos and isinstance(bestChar, OcrChar):
-                    result.append(bestChar.letter)
-                    absolute_charpos += 1
-                    confidence = 0
 
 
     def expandRect(self, original, expandXPixels, expandYPixels, maxX, maxY):
