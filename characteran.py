@@ -54,7 +54,10 @@ def characteranalysis(img_data):
     print "BestFitScore: %d, Index: %d"%(bestFitScore, bestFitIndex)
     if bestFitScore <= 1:
         print "low best fit score"
-        return None
+        img_data.disqualified = True
+        return img_data
+    else:
+        img_data.disqualified = False
 
     img_contours = bestContours.drawContours(bestThreshold)
     cv2.imshow("bestThreshold", bestThreshold)

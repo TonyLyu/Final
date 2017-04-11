@@ -31,7 +31,7 @@ class platemask:
                 if contours[imgIndex].goodIndices[i]:
                     charsRecognized += 1
                 if contours[imgIndex].goodIndices[i] and contours[imgIndex].hierarchy[0][i][3] != -1:
-                    parentId = contours[imgIndex].hierarchy[i][3]
+                    parentId = contours[imgIndex].hierarchy[0][i][3]
                     hasParent = True
                     charsRecognizedInContours[parentId] += 1
             if charsRecognized == 0:
