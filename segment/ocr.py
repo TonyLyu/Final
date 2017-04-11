@@ -17,7 +17,6 @@ class OCR:
         resultProcess = ResultProcess()
         resultProcess.setConfidenceThreshold(65, 80)
 
-
         absolute_charpos = 0
         result = []
         for line_idx in range(0, len(img_data.textLines)):
@@ -42,8 +41,12 @@ class OCR:
             #         result.append(bestChar.letter)
             #         absolute_charpos += 1
             #         confidence = 0
-            for letter in resultProcess.letters:
-                print letter[0].letter
+        for letter in resultProcess.letters:
+                if len(letter) > 0:
+                    result.append(letter[0].letter)
+                    # print letter[0].letter
+        return result
+
 
 
 
@@ -63,7 +66,7 @@ class OCR:
             expandedRegion.height = maxY - expandedRegion.y
         return expandedRegion
     def recognize_line(self, line_idx, img_data):
-        cv2.imshow("final", img_data.thresholds[0])
+
         with tesserocr.PyTessBaseAPI() as api:
             space_char_code = 32
             recognized_chars = []
@@ -71,6 +74,7 @@ class OCR:
             api.Init(l, "lus")
             api.SetVariable("save_blob_choices", "T")
             api.SetVariable("debug_file", "/dev/null")
+
             api.SetPageSegMode(tesserocr.PSM.SINGLE_CHAR)
             for i in range(0, len(img_data.thresholds)):
 
@@ -81,10 +85,10 @@ class OCR:
                 api.SetImage(img)
 
                 absolute_charpos = 0
-
                 for j in range(0, len(img_data.charRegions[line_idx])):
 
                     expandedRegion = self.expandRect(img_data.charRegions[line_idx][j], 2, 2, img_data.thresholds[i].shape[1], img_data.thresholds[i].shape[0])
+
                     api.SetRectangle(expandedRegion.x, expandedRegion.y, expandedRegion.width, expandedRegion.height)
 
                     api.Recognize()
@@ -93,8 +97,11 @@ class OCR:
                     # while True:
                     for r in tesserocr.iterate_level(ri, level):
                         # symbol = ri.GetUTF8Text(level)
-                        symbol = r.GetUTF8Text(level)
-                        conf = r.Confidence(level)
+                        try:
+                            symbol = r.GetUTF8Text(level)
+                            conf = r.Confidence(level)
+                        except:
+                            symbol = 0
                         fontindex = 0
                         pointsize = 0
                         fontName = r.WordFontAttributes()

@@ -31,6 +31,8 @@ class CharacterSegmenter:
             self.bottom = self.img_data.textLines[lineidx].bottomLine
 
             avgCharHeight = self.img_data.textLines[lineidx].lineHeight
+            print "avgCharHeight is %d" % avgCharHeight
+
 
             # avgCharHeight = 70
             ####
@@ -64,7 +66,7 @@ class CharacterSegmenter:
             #     print lineBox.y
             #     print lineBox.width
             #     print lineBox.height
-            #     print "-----------------------------";
+            #     print "-----------------------------"
             # print avgCharHeight
             # print avgCharWidth
             candidateBoxes = self.getBestCharBoxes(self.img_data.thresholds[0], lineBoxes, avgCharWidth)
@@ -90,8 +92,11 @@ class CharacterSegmenter:
             cv2.imshow("clean1", cleanStages[0])
             cv2.imshow("clean2", cleanStages[1])
             cv2.imshow("clean3", cleanStages[2])
+            cv2.waitKey(0)
             ##end
             edge_mask = self.filterEdgeBoxes(self.img_data.thresholds, candidateBoxes, avgCharWidth, avgCharHeight)
+
+
             edge_filter_mask = cv2.bitwise_and(edge_filter_mask, edge_mask)
             candidateBoxes = self.combineCloseBoxes(candidateBoxes)
             candidateBoxes = self.filterMostlyEmptyBoxes(self.img_data.thresholds, candidateBoxes)
@@ -107,7 +112,6 @@ class CharacterSegmenter:
                 all_regions_combined.append(self.img_data.charRegions[lidx][boxidx])
 
         self.img_data.thresholds = self.cleanCharRegions(self.img_data.thresholds, all_regions_combined)
-        cv2.imshow("final thre", self.img_data.thresholds[0])
         cv2.waitKey(0)
 
         return self.img_data
@@ -317,6 +321,7 @@ class CharacterSegmenter:
     def filterEdgeBoxes(self, thresholds, charRegions, avgCharWidth, avgCharHeight):
         min_angle_for_rotation = 0.4
         min_connected_edge_pixel = avgCharHeight * 1.5
+
         alternate = thresholds[0].shape[0] * 0.92
         if alternate < min_connected_edge_pixel and alternate > avgCharHeight:
             min_connected_edge_pixel = alternate
@@ -330,7 +335,7 @@ class CharacterSegmenter:
             if abs(self.top.angle) > min_angle_for_rotation:
                 center = (thresholds[i].shape[1] / 2, thresholds[i].shape[0] / 2)
                 rot_mat = cv2.getRotationMatrix2D(center, self.top.angle, 1.0)
-                rotated = cv2.warpAffine(thresholds[i], rot_mat, (thresholds[i].shape[0], thresholds[i].shape[1]))
+                rotated = cv2.warpAffine(thresholds[i], rot_mat, dsize = (thresholds[i].shape[1], thresholds[i].shape[0]))
             else:
                 rotated = thresholds[i]
             leftEdgeX = 0
@@ -338,13 +343,16 @@ class CharacterSegmenter:
             col = charRegions[0].x + charRegions[0].width
             while col >= 0:
                 rowLength = self.getLongestBloblengthBetweenLines(rotated, col)
+
                 if rowLength > min_connected_edge_pixel:
                     leftEdgeX = col
                     break
                 col -= 1
             col = charRegions[len(charRegions) - 1].x
+
             while col < rotated.shape[1]:
                 rowLength = self.getLongestBloblengthBetweenLines(rotated, col)
+
                 if rowLength > min_connected_edge_pixel:
                     rightEdgeX = col
                     break
@@ -353,7 +361,6 @@ class CharacterSegmenter:
                 leftEdges.append(leftEdgeX)
             if rightEdgeX != thresholds[i].shape[1]:
                 rightEdges.append(rightEdgeX)
-
             leftEdge = 0
             rightEdge = thresholds[0].shape[1]
 
@@ -365,6 +372,7 @@ class CharacterSegmenter:
                 rightEdge = rightEdges[1] - 1
             if leftEdge != 0 or rightEdge != thresholds[0].shape[1]:
                 mask = np.zeros((thresholds[0].shape[0], thresholds[0].shape[1]), np.uint8)
+
                 mask = cv2.bitwise_not(mask)
 
                 mask = cv2.rectangle(mask, (0, int(charRegions[0].y)), (int(leftEdge), int(charRegions[0].y + charRegions[0].height)), (0, 0, 0), -1)
@@ -373,12 +381,13 @@ class CharacterSegmenter:
                 if abs(self.top.angle > min_angle_for_rotation):
                     center = (mask.shape[1] / 2, mask.shape[0] / 2)
                     rot_mat = cv2.getRotationMatrix2D(center, self.top.angle * -1, 1.0 )
-                    mask = cv2.warpAffine(mask, rot_mat, (mask.shape[0], mask.shape[1]))
+                    mask = cv2.warpAffine(mask, rot_mat, dsize = (mask.shape[1], mask.shape[0]))
                 max_coverage_percent = 0.5
                 leftCoveragePx = leftEdge - charRegions[0].x
                 leftCoveragePercent = float(leftCoveragePx) / float(charRegions[0].width)
                 rightCoveragePx = (charRegions[len(charRegions) - 1].x + charRegions[len(charRegions) - 1].width) - rightEdge
                 rightCoveragePercent = float(rightCoveragePx) / float(charRegions[len(charRegions) - 1].width)
+
 
                 if leftCoveragePercent > max_coverage_percent or charRegions[0].width - leftCoveragePx < 4:
                     mask = cv2.rectangle(mask, (int(charRegions[0].x), int(charRegions[0].y)),
@@ -388,6 +397,7 @@ class CharacterSegmenter:
                     mask = cv2.rectangle(mask, (int(charRegions[-1].x), int(charRegions[-1].y)),
                                          (int(charRegions[-1].x + charRegions[-1].width), int(charRegions[-1].y + charRegions[-1].height)),
                                          (0, 0, 0), -1)
+
                 return mask
         return empty_mask
 
@@ -401,8 +411,7 @@ class CharacterSegmenter:
             isbetweenLines = False
             isOn = bool(img.item(row, col))
             if isOn:
-                isbetweenLines = self.top.isPointBelowLine((col, row)) and \
-                                 (not self.bottom.isPointBelowLine((col, row)))
+                isbetweenLines = self.top.isPointBelowLine((col, row)) and (not self.bottom.isPointBelowLine((col, row)))
                 incrementBy = 1
                 if not isbetweenLines:
                     incrementBy = 1.1
@@ -412,7 +421,7 @@ class CharacterSegmenter:
                 wasbetweenLines = True
             if onSegment and (isOn == False or row == img.shape[0] - 1):
                 if wasbetweenLines and curSegmentLength > longestBloblength:
-                    longestBloblength = curSegmentLength
+                    longestBloblength = int(curSegmentLength)
                 onSegment = False
                 isbetweenLines = False
                 curSegmentLength = 0
