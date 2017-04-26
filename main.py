@@ -10,7 +10,8 @@ from transformation import Transformation
 from textline import TextLine
 from segment.ocr import OCR
 import numpy as np
-img = cv2.imread('scene04831.png')
+from province_detect.state_detector import SateDetector
+img = cv2.imread('q.jpeg')
 img_data = ImageData(img)
 rows, cols = img.shape[:2]
 grays, regions = detector.detect(img)
@@ -90,6 +91,12 @@ for numberPlate in range(len(grays)):
     result = ocr.performOCR(img_data)
     numberOfPlate = "".join(result)
     print numberOfPlate
+
+    stateDetector = SateDetector()
+    state_candidates, text = stateDetector.detect1(img_data.color_deskewed, img_data.color_deskewed.shape[2], img_data.color_deskewed.shape[1], img_data.color_deskewed.shape[0])
+    if len(state_candidates) > 0:
+        print state_candidates[0].state_code
+    print text
 
 cv2.destroyAllWindows()
 
